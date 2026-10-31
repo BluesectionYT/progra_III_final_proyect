@@ -3,8 +3,7 @@ package co.edu.uptc.model;
 import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.HashMap;
-
-import structures.Queue;
+import co.edu.uptc.structures.Queue;
 
 public class Project {
     private String name;
