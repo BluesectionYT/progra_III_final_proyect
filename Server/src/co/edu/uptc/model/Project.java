@@ -2,7 +2,10 @@ package co.edu.uptc.model;
 
 import java.time.LocalDate;
 import java.util.ArrayList;
+import java.util.Comparator;
 import java.util.HashMap;
+
+import co.edu.uptc.structures.BinaryTree;
 import co.edu.uptc.structures.Queue;
 
 public class Project {
@@ -18,9 +21,14 @@ public class Project {
 
     public Project(String name, double totalBudget, ArrayList<Category> categories, User admin) {
         this.name = name;
+        this.active = true;
         this.totalBudget = totalBudget;
+        this.availableBalance = this.totalBudget;
         this.categories = categories;
         this.admin = admin;
+        this.members = new ArrayList<>();
+        this.requests = new ArrayList<>();
+        this.pendingQueue = new Queue<>();
     }
 
     public String getName() {
@@ -60,54 +68,59 @@ public class Project {
     }
 
     public void addMember(User user) {
-        if(members.contains(user)){
+        if (members.contains(user)) {
             throw new IllegalArgumentException("Usuario ya existente en este proyecto");
         }
-        if(user.hasProject()){
+        if (user.hasProject()) {
             throw new IllegalArgumentException("Usuario ya existente en otro proyecto");
         }
-        members.add(user);
-        user.setCurrenProject(this);
-        user.setRole(Role.MEMBER);
+        if (!isActive()) {
+            throw new IllegalArgumentException("Proyecto inactivo");
+        }
+        if (!user.getRole().equals(Role.ADMIN)) {
+            members.add(user);
+            user.acceptInvitation(this);
+            user.setRole(Role.MEMBER);
+        }
     }
 
     public void removeMember(User user) {
-        if(members.contains(user)){
+        if (members.contains(user)) {
             members.remove(user);
-            user.setCurrenProject(null);
-            user.setRole(null);
+            user.leaveProject();
         }
     }
 
-    public void transferAdmin(User newAdmin){
-        if(!members.contains(newAdmin)){
+    public void transferAdmin(User newAdmin) {
+        if (!members.contains(newAdmin)) {
             throw new IllegalArgumentException("Usuario no existente en este proyecto");
         }
-        if(!newAdmin.getRole().equals(Role.MEMBER)){
+        if (!newAdmin.getRole().equals(Role.MEMBER)) {
             throw new IllegalArgumentException("El nuevo administrador no puede ser ya administrador");
         }
+        members.add(admin);
+        admin.setRole(Role.MEMBER);
         newAdmin.setRole(Role.ADMIN);
         members.remove(newAdmin);
         this.admin = newAdmin;
     }
 
-    public void inviteMember(User invitee){
-        if(invitee.hasProject()){
+    public void inviteMember(User invitee) {
+        if (invitee.hasProject()) {
             throw new IllegalArgumentException("Usuario existente en otro proyecto");
         }
-        if(!members.contains(invitee)){
+        if (!members.contains(invitee)) {
             throw new IllegalArgumentException("Usuario existente en este proyecto");
         }
-        if(!admin.isInWorkcircle(invitee)){
+        if (!invitee.isInWorkcircle(admin)) {
             throw new IllegalArgumentException("Solo puede invitar a personas en su circulo de trabajo");
         }
         invitee.receiveInvitation(this);
     }
 
-    public void close(){
-        for(User user : members){
-            user.setCurrenProject(null);
-            user.setRole(null);
+    public void close() {
+        for (User user : members) {
+            user.leaveProject();
         }
         this.members.clear();
         this.categories.clear();
@@ -116,43 +129,121 @@ public class Project {
         this.admin.setRole(null);
         this.admin.setCurrenProject(null);
         this.admin = null;
+        this.active = false;
     }
 
-    public void submitRequest(ExpenseRequest request){
-        if(request == null){
+    public void submitRequest(ExpenseRequest request) {
+        if (request == null) {
             throw new IllegalArgumentException("La solicitud no puede ser nula");
         }
-        if(requests.contains(request)){
+        if (requests.contains(request)) {
             throw new IllegalArgumentException("La solicitud ya fue enviada");
         }
+        pendingQueue.push(request);
         requests.add(request);
     }
 
-    public void approve(ExpenseRequest request, String reason){
-
+    public void approve(ExpenseRequest request, String reason) {
+        if (request == null) {
+            throw new IllegalArgumentException("La solicitud no puede ser nula");
+        }
+        if (reason == null || reason.isBlank()) {
+            throw new IllegalArgumentException("La razon no puede ser nula");
+        }
+        if (request.getAmount() < availableBalance && request.getStatus().equals(RequestStatus.PENDING)) {
+            request.approve(reason);
+            availableBalance -= request.getAmount();
+        }
     }
 
-    public void reject(ExpenseRequest request, String reason){
-
+    public void reject(ExpenseRequest request, String reason) {
+        if (request == null) {
+            throw new IllegalArgumentException("La solicitud no puede ser nula");
+        }
+        if (reason == null || reason.isBlank()) {
+            throw new IllegalArgumentException("La razon no puede ser nula");
+        }
+        request.reject(reason);
     }
 
-    public double getTotalSpend(){
-        return totalBudget -  availableBalance;
+    public double getTotalSpend() {
+        return totalBudget - availableBalance;
     }
 
-    public HashMap<Category, Double> getSpentByCategory(){
-        return null;
+    public HashMap<Category, Double> getSpentByCategory() {
+        HashMap<Category, Double> result = new HashMap<>();
+        for (Category category : categories) {
+            result.put(category, 0.0);
+        }
+        for (ExpenseRequest request : requests) {
+            if (request.getStatus().equals(RequestStatus.APPROVED)) {
+                Category category = request.getCategory();
+                result.put(category, result.getOrDefault(category, 0.0) + request.getAmount());
+            }
+        }
+        return result;
     }
 
-    public HashMap<User, Double> getSpentByUser(){
-        return null;
+    public HashMap<User, Double> getSpentByUser() {
+        HashMap<User, Double> result = new HashMap<>();
+        for (User member : members) {
+            result.put(member, 0.0);
+        }
+        for (ExpenseRequest request : requests) {
+            if (request.getStatus().equals(RequestStatus.APPROVED)) {
+                User requester = request.getRequester();
+                result.put(requester, result.getOrDefault(requester, 0.0) + request.getAmount());
+            }
+        }
+        return result;
     }
 
-    public ArrayList<ExpenseRequest> filterHistory(Category category, RequestStatus status, LocalDate from, LocalDate to){
-        return null;
+    public ArrayList<ExpenseRequest> filterHistory(Category category, RequestStatus status, LocalDate from, LocalDate to) {
+        if (from != null && to != null && from.isAfter(to)) {
+            throw new IllegalArgumentException("La fecha inicial no puede ser posterior a la final");
+        }
+        ArrayList<ExpenseRequest> result = new ArrayList<>();
+        for (ExpenseRequest request : requests) {
+            LocalDate createdDate = request.getCreatedAt().toLocalDate();
+            boolean matches = true;
+            if (category != null && !category.equals(request.getCategory())) {
+                matches = false;
+            }
+            if (status != null && !status.equals(request.getStatus())) {
+                matches = false;
+            }
+            if (from != null && createdDate.isBefore(from)) {
+                matches = false;
+            }
+            if (to != null && createdDate.isAfter(to)) {
+                matches = false;
+            }
+            if (matches) {
+                result.add(request);
+            }
+        }
+        return result;
     }
 
-    public ArrayList<ExpenseRequest> filterHistory(ArrayList<ExpenseRequest> requests, SortCriteria criteria){
-        return null;
+    public ArrayList<ExpenseRequest> filterHistory(ArrayList<ExpenseRequest> requests, SortCriteria criteria) {
+        if (requests == null || criteria == null) {
+            throw new IllegalArgumentException("Las solicitudes y el criterio no pueden ser nulos");
+        }
+        Comparator<ExpenseRequest> comparator;
+        if (criteria.equals(SortCriteria.AMOUNT_DESCENDING)) {
+            comparator = Comparator.comparingDouble(ExpenseRequest::getAmount).reversed();
+        } else if (criteria.equals(SortCriteria.CREATED_DATE)) {
+            comparator = Comparator.comparing(ExpenseRequest::getCreatedAt);
+        } else if (criteria.equals(SortCriteria.APPROVAL_DATE)) {
+            comparator = Comparator.comparing(ExpenseRequest::getResolvedAt, Comparator.nullsLast(Comparator.naturalOrder()));
+        } else {
+            comparator = Comparator.comparing(request -> request.getRequester().getUsername());
+        }
+        comparator = comparator.thenComparingInt(ExpenseRequest::getId);
+        BinaryTree<ExpenseRequest> tree = new BinaryTree<>(comparator);
+        for (ExpenseRequest request : requests) {
+            tree.add(request);
+        }
+        return tree.inOrderData();
     }
 }

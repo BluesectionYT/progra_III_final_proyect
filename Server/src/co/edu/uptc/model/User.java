@@ -82,7 +82,6 @@ public class User {
         if (!this.pendingInvitations.contains(project)) {
             throw new IllegalStateException("No existe una invitación pendiente para este proyecto");
         }
-
         this.currenProject = project;
         this.pendingInvitations.remove(project);
     }
@@ -94,7 +93,6 @@ public class User {
         if (!this.pendingInvitations.contains(project)) {
             throw new IllegalStateException("No existe una invitación pendiente para este proyecto");
         }
-
         this.pendingInvitations.remove(project);
     }
 
@@ -102,7 +100,7 @@ public class User {
         if (!hasProject()) {
             throw new IllegalStateException("El usuario no pertenece a ningún proyecto actualmente");
         }
-        
+        this.role = null;
         this.currenProject = null;
     }
 
