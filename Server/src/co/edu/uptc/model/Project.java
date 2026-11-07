@@ -20,15 +20,23 @@ public class Project {
     private Queue<ExpenseRequest> pendingQueue;
 
     public Project(String name, double totalBudget, ArrayList<Category> categories, User admin) {
-        this.name = name;
-        this.active = true;
-        this.totalBudget = totalBudget;
-        this.availableBalance = this.totalBudget;
-        this.categories = categories;
-        this.admin = admin;
-        this.members = new ArrayList<>();
-        this.requests = new ArrayList<>();
-        this.pendingQueue = new Queue<>();
+        if(name != null && totalBudget > 0 && categories != null && admin != null) {
+            this.name = name;
+            this.active = true;
+            this.totalBudget = totalBudget;
+            this.availableBalance = this.totalBudget;
+            this.categories = categories;
+            this.admin = admin;
+            this.members = new ArrayList<>();
+            this.requests = new ArrayList<>();
+            this.pendingQueue = new Queue<>();
+            projectAssignation();
+        }
+    }
+
+    private void projectAssignation() {
+        admin.setRole(Role.ADMIN);
+        admin.setCurrentProject(this);
     }
 
     public String getName() {
@@ -68,27 +76,25 @@ public class Project {
     }
 
     public void addMember(User user) {
-        if (members.contains(user)) {
+        if (!active) throw new IllegalStateException("Proyecto inactivo");
+        if (user.equals(admin) || members.contains(user))
             throw new IllegalArgumentException("Usuario ya existente en este proyecto");
-        }
-        if (user.hasProject()) {
+        if (user.hasProject())
             throw new IllegalArgumentException("Usuario ya existente en otro proyecto");
-        }
-        if (!isActive()) {
-            throw new IllegalArgumentException("Proyecto inactivo");
-        }
-        if (!user.getRole().equals(Role.ADMIN)) {
-            members.add(user);
-            user.acceptInvitation(this);
-            user.setRole(Role.MEMBER);
-        }
+        if (!user.getPendingInvitations().contains(this))
+            throw new IllegalStateException("El usuario no tiene invitación pendiente");
+        members.add(user);
+        user.setRole(Role.MEMBER);
+        user.setCurrentProject(this);
     }
 
     public void removeMember(User user) {
-        if (members.contains(user)) {
-            members.remove(user);
-            user.leaveProject();
+        if (!members.contains(user)) {
+            throw new IllegalArgumentException("El usuario no es miembro de este proyecto");
         }
+        members.remove(user);
+        user.setRole(Role.MEMBER);
+        user.setCurrentProject(null);
     }
 
     public void transferAdmin(User newAdmin) {
@@ -109,50 +115,73 @@ public class Project {
         if (invitee.hasProject()) {
             throw new IllegalArgumentException("Usuario existente en otro proyecto");
         }
-        if (!members.contains(invitee)) {
+        if (members.contains(invitee)) {
             throw new IllegalArgumentException("Usuario existente en este proyecto");
         }
-        if (!invitee.isInWorkcircle(admin)) {
+        if (!admin.isInWorkCircle(invitee)) {
             throw new IllegalArgumentException("Solo puede invitar a personas en su circulo de trabajo");
         }
         invitee.receiveInvitation(this);
     }
 
     public void close() {
-        for (User user : members) {
-            user.leaveProject();
+        if (this.isActive()) {
+            for (User user : members) {
+                user.setRole(Role.MEMBER);
+                user.setCurrentProject(null);
+            }
+            members.clear();
+            this.categories.clear();
+            this.requests.clear();
+            while (!pendingQueue.isEmpty()) {
+                pendingQueue.pull();
+            }
+            this.admin.setRole(Role.MEMBER);
+            this.admin.setCurrentProject(null);
+            this.admin = null;
+            this.active = false;
         }
-        this.members.clear();
-        this.categories.clear();
-        this.requests.clear();
-        this.pendingQueue = null;
-        this.admin.setRole(null);
-        this.admin.setCurrenProject(null);
-        this.admin = null;
-        this.active = false;
     }
 
     public void submitRequest(ExpenseRequest request) {
-        if (request == null) {
-            throw new IllegalArgumentException("La solicitud no puede ser nula");
-        }
         if (requests.contains(request)) {
             throw new IllegalArgumentException("La solicitud ya fue enviada");
         }
+        approveChecker(request);
+        request.setId(requests.size());
         pendingQueue.push(request);
         requests.add(request);
     }
 
     public void approve(ExpenseRequest request, String reason) {
-        if (request == null) {
-            throw new IllegalArgumentException("La solicitud no puede ser nula");
-        }
         if (reason == null || reason.isBlank()) {
             throw new IllegalArgumentException("La razon no puede ser nula");
         }
-        if (request.getAmount() < availableBalance && request.getStatus().equals(RequestStatus.PENDING)) {
-            request.approve(reason);
-            availableBalance -= request.getAmount();
+        approveChecker(request);
+        request.approve(reason);
+        availableBalance -= request.getAmount();
+        request.getCategory().addSpent(request.getAmount());
+        pendingQueue.pull();
+    }
+
+    private void approveChecker(ExpenseRequest request) {
+        if (request == null) {
+            throw new IllegalArgumentException("La solicitud no puede ser nula");
+        }
+        if (pendingQueue.peek() != request) {
+            throw new IllegalStateException("Debe resolver primero la solicitud más antigua");
+        }
+        if (!active) {
+            throw new IllegalStateException("Proyecto inactivo");
+        }
+        if (request.getStatus() != RequestStatus.PENDING) {
+            throw new IllegalStateException("La solicitud ya fue resuelta: " + request.getStatus());
+        }
+        if (request.getAmount() > availableBalance) {
+            throw new IllegalStateException("Saldo disponible insuficiente");
+        }
+        if (!request.getCategory().canAfford(request.getAmount())) {
+            throw new IllegalStateException("La categoría no tiene presupuesto suficiente");
         }
     }
 
@@ -164,9 +193,10 @@ public class Project {
             throw new IllegalArgumentException("La razon no puede ser nula");
         }
         request.reject(reason);
+        pendingQueue.pull();
     }
 
-    public double getTotalSpend() {
+    public double getTotalSpent() {
         return totalBudget - availableBalance;
     }
 
@@ -184,7 +214,7 @@ public class Project {
         return result;
     }
 
-    public HashMap<User, Double> getSpentByUser() {
+    public HashMap<User, Double> getSpentByMember() {
         HashMap<User, Double> result = new HashMap<>();
         for (User member : members) {
             result.put(member, 0.0);
@@ -198,7 +228,7 @@ public class Project {
         return result;
     }
 
-    public ArrayList<ExpenseRequest> filterHistory(Category category, RequestStatus status, LocalDate from, LocalDate to) {
+    public ArrayList<ExpenseRequest> sortHistory(Category category, RequestStatus status, LocalDate from, LocalDate to) {
         if (from != null && to != null && from.isAfter(to)) {
             throw new IllegalArgumentException("La fecha inicial no puede ser posterior a la final");
         }
