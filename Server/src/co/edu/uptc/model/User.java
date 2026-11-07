@@ -2,13 +2,14 @@ package co.edu.uptc.model;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Objects;
 
 public class User {
     private String username;
     private String passwordHash;
     private List<User> workCircle;
     private List<Project> pendingInvitations;
-    private Project currenProject;
+    private Project currentProject;
     private Role role;
     
     public User(String username, String passwordHash) {
@@ -16,6 +17,8 @@ public class User {
         this.passwordHash = passwordHash;
         workCircle = new ArrayList<>();
         pendingInvitations = new ArrayList<>();
+        this.currentProject = null;
+        this.role = Role.MEMBER;
     }
 
     public String getUsername() {
@@ -34,33 +37,32 @@ public class User {
         return pendingInvitations;
     }
 
-    public Project getCurrenProject() {
-        return currenProject;
+    public Project getCurrentProject() {
+        return currentProject;
     }
 
     public Role getRole() {
         return role;
     }
 
-    public void setCurrenProject(Project currenProject) {
-        this.currenProject = currenProject;
+    public void setCurrentProject(Project currentProject) {
+        this.currentProject = currentProject;
     }
 
     public void setRole(Role role) {
         this.role = role;
     }
 
-    public void addToWorkcircle(User user){
+    public void addToWorkCircle(User user){
         if (user == null) {
             throw new IllegalArgumentException("El usuario no puede ser nulo");
         }
-
-        if (!isInWorkcircle(user)) {
+        if (!isInWorkCircle(user)) {
             this.workCircle.add(user);
         }
     }
 
-    public boolean isInWorkcircle(User user){
+    public boolean isInWorkCircle(User user){
         if (user == null) return false;
         return this.workCircle.contains(user);
     }
@@ -82,7 +84,7 @@ public class User {
         if (!this.pendingInvitations.contains(project)) {
             throw new IllegalStateException("No existe una invitación pendiente para este proyecto");
         }
-        this.currenProject = project;
+        project.addMember(this);
         this.pendingInvitations.remove(project);
     }
 
@@ -97,14 +99,28 @@ public class User {
     }
 
     public void leaveProject() {
-        if (!hasProject()) {
+        if (!hasProject()){
             throw new IllegalStateException("El usuario no pertenece a ningún proyecto actualmente");
         }
-        this.role = null;
-        this.currenProject = null;
+        if (role == Role.ADMIN) {
+            throw new IllegalStateException("El administrador debe transferir el cargo o cerrar el proyecto");
+        }
+        currentProject.removeMember(this);
     }
 
     public boolean hasProject() {
-        return this.currenProject != null;
+        return this.currentProject != null;
+    }
+
+    @Override
+    public boolean equals(Object o) {
+        if (o == null || getClass() != o.getClass()) return false;
+        User user = (User) o;
+        return Objects.equals(username, user.username) && Objects.equals(passwordHash, user.passwordHash) && Objects.equals(workCircle, user.workCircle) && Objects.equals(pendingInvitations, user.pendingInvitations) && Objects.equals(currentProject, user.currentProject) && role == user.role;
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(username, passwordHash, workCircle, pendingInvitations, currentProject, role);
     }
 }
