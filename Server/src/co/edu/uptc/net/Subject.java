@@ -5,5 +5,5 @@ import co.edu.uptc.controller.ClientThread;
 public interface Subject {
     public void attach(Observer observer);
     public void detach(Observer observer);
-    public void notifyAllObservers(ClientThread client);
+    public void notifyAllObservers(ClientThread client, String[] data);
 }

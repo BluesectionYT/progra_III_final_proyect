@@ -1,5 +1,6 @@
 package co.edu.uptc.controller;
 
+import co.edu.uptc.interfaces.IProjectManager;
 import co.edu.uptc.model.ProjectManager;
 import co.edu.uptc.net.Observer;
 import co.edu.uptc.net.Subject;
@@ -12,8 +13,7 @@ import java.util.ArrayList;
 public class Controller implements Subject {
     private static final int PORT = 10087;
     private ServerSocket serverSocket;
-    private Socket socket;
-    private ProjectManager projectManager;
+    private IProjectManager projectManager;
     private ArrayList<Observer> observers;
 
     public Controller() {
@@ -29,13 +29,13 @@ public class Controller implements Subject {
     public void init() {
         try {
             while (true) {
-                this.socket = serverSocket.accept();
+                Socket socket = serverSocket.accept();
                 ClientThread clientThread = new ClientThread(socket, projectManager, this);
                 this.attach(clientThread);
                 clientThread.start();
             }
         } catch (IOException e) {
-
+            e.printStackTrace();
         }
     }
 
@@ -51,11 +51,11 @@ public class Controller implements Subject {
     }
 
     @Override
-    public void notifyAllObservers(ClientThread client) {
+    public void notifyAllObservers(ClientThread client, String[] data) {
         for (int i = 0; i < observers.size(); i++) {
             Observer observer = observers.get(i);
             if(!observer.equals(client)) {
-                observer.update();
+                observer.update(data[0], data[1]);
             }
         }
     }
