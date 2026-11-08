@@ -20,18 +20,19 @@ public class Project {
     private Queue<ExpenseRequest> pendingQueue;
 
     public Project(String name, double totalBudget, ArrayList<Category> categories, User admin) {
-        if(name != null && totalBudget > 0 && categories != null && admin != null) {
-            this.name = name;
-            this.active = true;
-            this.totalBudget = totalBudget;
-            this.availableBalance = this.totalBudget;
-            this.categories = categories;
-            this.admin = admin;
-            this.members = new ArrayList<>();
-            this.requests = new ArrayList<>();
-            this.pendingQueue = new Queue<>();
-            projectAssignation();
+        if(name == null || totalBudget <= 0 || categories == null || admin == null) {
+            throw new IllegalArgumentException("Project name and total budget and categories are required");
         }
+        this.name = name;
+        this.active = true;
+        this.totalBudget = totalBudget;
+        this.availableBalance = this.totalBudget;
+        this.categories = categories;
+        this.admin = admin;
+        this.members = new ArrayList<>();
+        this.requests = new ArrayList<>();
+        this.pendingQueue = new Queue<>();
+        projectAssignation();
     }
 
     private void projectAssignation() {
@@ -144,10 +145,21 @@ public class Project {
     }
 
     public void submitRequest(ExpenseRequest request) {
-        if (requests.contains(request)) {
-            throw new IllegalArgumentException("La solicitud ya fue enviada");
+        if (request == null) {
+            throw new IllegalArgumentException("La solicitud no puede ser nula");
         }
-        approveChecker(request);
+        if (!active) {
+            throw new IllegalStateException("Proyecto inactivo");
+        }
+        if (!members.contains(request.getRequester())) {
+            throw new IllegalArgumentException("Solo los integrantes pueden enviar solicitudes");
+        }
+        if (!categories.contains(request.getCategory())) {
+            throw new IllegalArgumentException("La categoría no pertenece a este proyecto");
+        }
+        if (request.getStatus() != RequestStatus.PENDING || requests.contains(request)) {
+            throw new IllegalArgumentException("La solicitud no es válida para enviarse");
+        }
         request.setId(requests.size());
         pendingQueue.push(request);
         requests.add(request);
@@ -157,14 +169,6 @@ public class Project {
         if (reason == null || reason.isBlank()) {
             throw new IllegalArgumentException("La razon no puede ser nula");
         }
-        approveChecker(request);
-        request.approve(reason);
-        availableBalance -= request.getAmount();
-        request.getCategory().addSpent(request.getAmount());
-        pendingQueue.pull();
-    }
-
-    private void approveChecker(ExpenseRequest request) {
         if (request == null) {
             throw new IllegalArgumentException("La solicitud no puede ser nula");
         }
@@ -183,6 +187,10 @@ public class Project {
         if (!request.getCategory().canAfford(request.getAmount())) {
             throw new IllegalStateException("La categoría no tiene presupuesto suficiente");
         }
+        request.approve(reason);
+        availableBalance -= request.getAmount();
+        request.getCategory().addSpent(request.getAmount());
+        pendingQueue.pull();
     }
 
     public void reject(ExpenseRequest request, String reason) {
@@ -191,6 +199,9 @@ public class Project {
         }
         if (reason == null || reason.isBlank()) {
             throw new IllegalArgumentException("La razon no puede ser nula");
+        }
+        if (pendingQueue.peek() != request) {
+            throw new IllegalStateException("Debe resolver primero la solicitud más antigua");
         }
         request.reject(reason);
         pendingQueue.pull();
@@ -228,7 +239,7 @@ public class Project {
         return result;
     }
 
-    public ArrayList<ExpenseRequest> sortHistory(Category category, RequestStatus status, LocalDate from, LocalDate to) {
+    public ArrayList<ExpenseRequest> filterHistory(Category category, RequestStatus status, LocalDate from, LocalDate to) {
         if (from != null && to != null && from.isAfter(to)) {
             throw new IllegalArgumentException("La fecha inicial no puede ser posterior a la final");
         }
@@ -255,7 +266,7 @@ public class Project {
         return result;
     }
 
-    public ArrayList<ExpenseRequest> filterHistory(ArrayList<ExpenseRequest> requests, SortCriteria criteria) {
+    public ArrayList<ExpenseRequest> sortHistory(ArrayList<ExpenseRequest> requests, SortCriteria criteria) {
         if (requests == null || criteria == null) {
             throw new IllegalArgumentException("Las solicitudes y el criterio no pueden ser nulos");
         }
@@ -275,5 +286,15 @@ public class Project {
             tree.add(request);
         }
         return tree.inOrderData();
+    }
+
+    public ArrayList<ExpenseRequest> getRequestsOf(User user) {
+        ArrayList<ExpenseRequest> result = new ArrayList<>();
+        for (ExpenseRequest request : requests) {
+            if (request.getRequester().equals(user)) {
+                result.add(request);
+            }
+        }
+        return result;
     }
 }
