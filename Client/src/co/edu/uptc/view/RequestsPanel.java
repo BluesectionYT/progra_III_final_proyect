@@ -1,55 +1,47 @@
 package co.edu.uptc.view;
 
-import java.awt.Color;
+import java.awt.GridBagLayout;
 
 import javax.swing.JButton;
 import javax.swing.JComboBox;
-import javax.swing.JLabel;
 import javax.swing.JPanel;
 import javax.swing.JTextField;
+import javax.swing.table.DefaultTableModel;
 
 public class RequestsPanel extends JPanel {
     private JTextField conceptField;
     private JTextField amountField;
     private JComboBox<String> categoryCombo;
+    private JButton sendButton;
+    private DefaultTableModel requestsModel;
 
     public RequestsPanel() {
-        setLayout(null);
-        setBackground(Color.WHITE);
+        super(new GridBagLayout());
+        ViewUtils.styleAsTab(this);
         initComponents();
     }
 
     private void initComponents() {
-        JPanel newPanel = ViewUtils.createTitledPanel("Nueva solicitud", 15, 15, 815, 200);
+        add(createNewRequestPanel(), Cell.at(0, 0).growX().build());
 
-        JLabel conceptLabel = new JLabel("Concepto");
-        conceptLabel.setBounds(20, 30, 100, 28);
-        newPanel.add(conceptLabel);
-        conceptField = new JTextField();
-        conceptField.setBounds(130, 30, 260, 28);
-        newPanel.add(conceptField);
+        requestsModel = ViewUtils.createTableModel("#", "Fecha", "Concepto", "Categoría", "Monto", "Estado", "Motivo");
+        add(ViewUtils.createTablePanel("Mis solicitudes", requestsModel), Cell.at(1, 0).grow().build());
+    }
 
-        JLabel amountLabel = new JLabel("Monto ($)");
-        amountLabel.setBounds(20, 70, 100, 28);
-        newPanel.add(amountLabel);
-        amountField = new JTextField();
-        amountField.setBounds(130, 70, 260, 28);
-        newPanel.add(amountField);
+    private JPanel createNewRequestPanel() {
+        JPanel panel = ViewUtils.createTitledPanel("Nueva solicitud");
 
-        JLabel categoryLabel = new JLabel("Categoría");
-        categoryLabel.setBounds(20, 110, 100, 28);
-        newPanel.add(categoryLabel);
-        categoryCombo = new JComboBox<>();
-        categoryCombo.setBounds(130, 110, 260, 28);
-        categoryCombo.setBackground(Color.WHITE);
-        newPanel.add(categoryCombo);
+        conceptField = ViewUtils.createTextField();
+        ViewUtils.addFormRow(panel, 0, "Concepto", conceptField);
 
-        JButton sendButton = ViewUtils.createPrimaryButton("Enviar solicitud", 665, 150, 130, 30);
-        newPanel.add(sendButton);
-        add(newPanel);
+        amountField = ViewUtils.createTextField();
+        ViewUtils.addFormRow(panel, 1, "Monto ($)", amountField);
 
-        JPanel myRequestsPanel = ViewUtils.createTitledPanel("Mis solicitudes", 15, 230, 815, 480);
-        myRequestsPanel.add(ViewUtils.createTable(10, 25, 795, 440,"#", "Fecha", "Concepto", "Categoría", "Monto", "Estado", "Motivo"));
-        add(myRequestsPanel);
+        categoryCombo = ViewUtils.createComboBox();
+        ViewUtils.addFormRow(panel, 2, "Categoría", categoryCombo);
+
+        sendButton = ViewUtils.createPrimaryButton("Enviar solicitud");
+        panel.add(ViewUtils.createButtonBar(sendButton), Cell.at(3, 0).span(2).growX().build());
+        return panel;
     }
 }

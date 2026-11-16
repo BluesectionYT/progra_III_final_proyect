@@ -1,65 +1,65 @@
 package co.edu.uptc.view;
 
-import java.awt.Color;
+import java.awt.GridBagLayout;
 
 import javax.swing.JButton;
 import javax.swing.JComboBox;
-import javax.swing.JLabel;
 import javax.swing.JPanel;
 import javax.swing.JTextField;
+import javax.swing.table.DefaultTableModel;
 
-public class HistoryPanel extends JPanel{
+public class HistoryPanel extends JPanel {
+    private static final String DATE_HINT = "Formato AAAA-MM-DD";
+
     private JComboBox<String> categoryCombo;
     private JComboBox<String> statusCombo;
     private JTextField fromField;
     private JTextField toField;
     private JComboBox<String> orderCombo;
     private JButton applyButton;
+    private DefaultTableModel historyModel;
 
     public HistoryPanel() {
-        setLayout(null);
-        setBackground(Color.WHITE);
+        super(new GridBagLayout());
+        ViewUtils.styleAsTab(this);
         initComponents();
     }
 
-    private void initComponents(){
-        add(createLabel("Categoría", 15, 15, 70));
-        categoryCombo = new JComboBox<>();
-        categoryCombo.setBackground(Color.WHITE);
-        categoryCombo.setBounds(90, 15, 130, 28);
-        add(categoryCombo);
+    private void initComponents() {
+        add(createFiltersPanel(), Cell.at(0, 0).growX().build());
 
-        add(createLabel("Estado", 235, 15, 50));
-        statusCombo = new JComboBox<>();
-        statusCombo.setBackground(Color.WHITE);
-        statusCombo.setBounds(290, 15, 130, 28);
-        add(statusCombo);
-
-        add(createLabel("Desde", 435, 15, 45));
-        fromField = new JTextField();
-        fromField.setBounds(485, 15, 110, 28);
-        add(fromField);
-
-        add(createLabel("Hasta", 610, 15, 45));
-        toField = new JTextField();
-        toField.setBounds(660, 15, 110, 28);
-        add(toField);
-
-        add(createLabel("Ordenar por", 15, 55, 80));
-        orderCombo = new JComboBox<>();
-        orderCombo.setBackground(Color.WHITE);
-        orderCombo.setBounds(100, 55, 230, 28);
-        add(orderCombo);
-
-        applyButton = ViewUtils.createPrimaryButton("Aplicar", 345, 55, 100, 28);
-        add(applyButton);
-
-        add(ViewUtils.createTable(15, 100, 815, 620,"#", "Fecha", "Integrante", "Concepto", "Categoría", "Monto", "Estado", "Motivo"));
+        historyModel = ViewUtils.createTableModel("#", "Fecha", "Integrante", "Concepto", "Categoría", "Monto", "Estado", "Motivo");
+        add(ViewUtils.createTablePanel("Historial de gastos", historyModel), Cell.at(1, 0).grow().build());
     }
 
-    private JLabel createLabel(String text, int x, int y, int width) {
-        JLabel label = new JLabel(text);
-        label.setBounds(x, y, width, 28);
-        return label;
+    private JPanel createFiltersPanel() {
+        JPanel panel = ViewUtils.createTitledPanel("Filtros y orden");
+
+        categoryCombo = ViewUtils.createComboBox("Todas");
+        ViewUtils.addLabeledField(panel, 0, 0, "Categoría", categoryCombo);
+
+        statusCombo = ViewUtils.createComboBox("Todos", "Pendiente", "Aprobada", "Rechazada");
+        ViewUtils.addLabeledField(panel, 0, 2, "Estado", statusCombo);
+
+        orderCombo = ViewUtils.createComboBox("Monto (mayor a menor)", "Fecha de registro",
+                "Fecha de aprobación", "Integrante solicitante");
+        ViewUtils.addLabeledField(panel, 0, 4, "Ordenar por", orderCombo);
+
+        fromField = createDateField();
+        ViewUtils.addLabeledField(panel, 1, 0, "Desde", fromField);
+
+        toField = createDateField();
+        ViewUtils.addLabeledField(panel, 1, 2, "Hasta", toField);
+
+        applyButton = ViewUtils.createPrimaryButton("Aplicar");
+        panel.add(applyButton, Cell.at(1, 4).span(2).east().build());
+        return panel;
+    }
+
+    private JTextField createDateField() {
+        JTextField field = ViewUtils.createTextField();
+        field.setColumns(1);
+        field.setToolTipText(DATE_HINT);
+        return field;
     }
 }
