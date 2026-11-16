@@ -1,37 +1,42 @@
 package co.edu.uptc.view;
 
-import java.awt.Color;
-import java.awt.Font;
+import java.awt.GridBagLayout;
 
 import javax.swing.JLabel;
 import javax.swing.JPanel;
+import javax.swing.table.DefaultTableModel;
 
-public class SummaryPanel extends JPanel{
+public class SummaryPanel extends JPanel {
     private JLabel balanceLabel;
     private JLabel spentLabel;
+    private DefaultTableModel categoryModel;
+    private DefaultTableModel memberModel;
 
-    public SummaryPanel(){
-        setLayout(null);
-        setBackground(Color.WHITE);
+    public SummaryPanel() {
+        super(new GridBagLayout());
+        ViewUtils.styleAsTab(this);
         initComponents();
     }
 
-    private void initComponents(){
+    private void initComponents() {
+        initTotals();
+        initTables();
+    }
+
+    private void initTotals() {
         balanceLabel = new JLabel("Saldo disponible: ");
-        balanceLabel.setFont(new Font("SansSerif", Font.PLAIN, 24));
-        balanceLabel.setBounds(20, 15, 600, 35);
-        add(balanceLabel);
+        balanceLabel.setFont(ViewUtils.HIGHLIGHT_FONT);
+        add(balanceLabel, Cell.at(0, 0).span(2).build());
 
         spentLabel = new JLabel("Total gastado: ");
-        spentLabel.setBounds(20, 52, 600, 25);
-        add(spentLabel);
+        add(spentLabel, Cell.at(1, 0).span(2).build());
+    }
 
-        JPanel categoryPanel = ViewUtils.createTitledPanel("Consumo por categoría", 15, 90, 400, 640);
-        categoryPanel.add(ViewUtils.createTable(10, 25, 380, 600, "Categoría", "Presupuesto", "Gastado", "Uso"));
-        add(categoryPanel);
+    private void initTables() {
+        categoryModel = ViewUtils.createTableModel("Categoría", "Presupuesto", "Gastado", "Uso");
+        add(ViewUtils.createTablePanel("Consumo por categoría", categoryModel), Cell.at(2, 0).grow().build());
 
-        JPanel memberPanel = ViewUtils.createTitledPanel("Gasto por integrante", 430, 90, 400, 640);
-        memberPanel.add(ViewUtils.createTable(10, 25, 380, 600, "Integrante", "Gasto acumulado"));
-        add(memberPanel);
+        memberModel = ViewUtils.createTableModel("Integrante", "Gasto acumulado");
+        add(ViewUtils.createTablePanel("Gasto por integrante", memberModel), Cell.at(2, 1).grow().build());
     }
 }

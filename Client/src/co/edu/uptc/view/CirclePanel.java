@@ -1,37 +1,51 @@
 package co.edu.uptc.view;
 
-import java.awt.Color;
+import java.awt.GridBagLayout;
 
 import javax.swing.JButton;
+import javax.swing.JList;
 import javax.swing.JPanel;
 import javax.swing.JTextField;
 
-public class CirclePanel extends JPanel{
-    public CirclePanel(){
-        setLayout(null);
-        setBackground(Color.WHITE);
+public class CirclePanel extends JPanel {
+    private JList<String> circleList;
+    private JTextField memberField;
+    private JButton addButton;
+    private JList<String> invitationsList;
+    private JButton rejectButton;
+    private JButton acceptButton;
+
+    public CirclePanel() {
+        super(new GridBagLayout());
+        ViewUtils.styleAsTab(this);
         initComponents();
     }
 
-    private void initComponents(){
-        JPanel circlePanel = ViewUtils.createTitledPanel("Mi círculo de trabajo", 15, 15, 400, 700);
+    private void initComponents() {
+        add(createCirclePanel(), Cell.at(0, 0).grow().build());
+        add(createInvitationsPanel(), Cell.at(0, 1).grow().build());
+    }
 
-        JTextField memberField = new JTextField();
-        memberField.setBounds(10, 655, 280, 28);
-        circlePanel.add(memberField);
+    private JPanel createCirclePanel() {
+        circleList = new JList<>();
+        JPanel panel = ViewUtils.createListPanel("Mi círculo de trabajo", circleList, 2);
 
-        JButton addButton = ViewUtils.createPrimaryButton("Agregar", 300, 655, 90, 28);
-        circlePanel.add(addButton);
-        add(circlePanel);
+        memberField = ViewUtils.createTextField();
+        memberField.setColumns(1);
+        panel.add(memberField, Cell.at(1, 0).growX().build());
 
-        JPanel invitationsPanel = ViewUtils.createTitledPanel("Invitaciones recibidas", 430, 15, 400, 700);
+        addButton = ViewUtils.createPrimaryButton("Agregar");
+        panel.add(addButton, Cell.at(1, 1).build());
+        return panel;
+    }
 
-        JButton rejectButton = new JButton("Rechazar");
-        rejectButton.setBounds(195, 655, 90, 28);
-        invitationsPanel.add(rejectButton);
+    private JPanel createInvitationsPanel() {
+        invitationsList = new JList<>();
+        JPanel panel = ViewUtils.createListPanel("Invitaciones recibidas", invitationsList);
 
-        JButton acceptButton = ViewUtils.createPrimaryButton("Aceptar", 295, 655, 90, 28);
-        invitationsPanel.add(acceptButton);
-        add(invitationsPanel);
+        rejectButton = ViewUtils.createButton("Rechazar");
+        acceptButton = ViewUtils.createPrimaryButton("Aceptar");
+        panel.add(ViewUtils.createButtonBar(rejectButton, acceptButton), Cell.at(1, 0).growX().build());
+        return panel;
     }
 }

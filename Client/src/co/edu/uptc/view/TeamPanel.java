@@ -1,13 +1,11 @@
 package co.edu.uptc.view;
 
-import java.awt.Color;
+import java.awt.GridBagLayout;
 
 import javax.swing.JButton;
 import javax.swing.JComboBox;
-import javax.swing.JLabel;
 import javax.swing.JList;
 import javax.swing.JPanel;
-import javax.swing.JScrollPane;
 
 public class TeamPanel extends JPanel {
     private JList<String> membersList;
@@ -18,42 +16,33 @@ public class TeamPanel extends JPanel {
     private JButton closeProjectButton;
 
     public TeamPanel() {
-        setLayout(null);
-        setBackground(Color.WHITE);
+        super(new GridBagLayout());
+        ViewUtils.styleAsTab(this);
         initComponents();
     }
 
     private void initComponents() {
-        JPanel membersPanel = ViewUtils.createTitledPanel("Integrantes", 15, 15, 815, 680);
         membersList = new JList<>();
-        JScrollPane scroll = new JScrollPane(membersList);
-        scroll.setBounds(10, 25, 795, 640);
-        scroll.setBorder(null);
-        membersPanel.add(scroll);
-        add(membersPanel);
+        add(ViewUtils.createListPanel("Integrantes", membersList), Cell.at(0, 0).span(3).grow().build());
+        initInviteRow();
+        initManagementRow();
+    }
 
-        JLabel inviteLabel = new JLabel("Invitar:");
-        inviteLabel.setBounds(15, 710, 50, 28);
-        add(inviteLabel);
+    private void initInviteRow() {
+        add(ViewUtils.createLabel("Invitar:"), Cell.at(1, 0).build());
 
-        inviteCombo = new JComboBox<>();
-        inviteCombo.setBackground(Color.WHITE);
-        inviteCombo.setBounds(70, 710, 110, 28);
-        add(inviteCombo);
+        inviteCombo = ViewUtils.createComboBox();
+        add(inviteCombo, Cell.at(1, 1).growX().build());
 
-        inviteButton = ViewUtils.createPrimaryButton("Enviar invitación", 190, 710, 140, 28);
-        add(inviteButton);
+        inviteButton = ViewUtils.createPrimaryButton("Enviar invitación");
+        add(inviteButton, Cell.at(1, 2).build());
+    }
 
-        removeButton = new JButton("Eliminar integrante");
-        removeButton.setBounds(340, 710, 140, 28);
-        add(removeButton);
-
-        transferButton = new JButton("Transferir administración");
-        transferButton.setBounds(490, 710, 170, 28);
-        add(transferButton);
-
-        closeProjectButton = new JButton("Cerrar proyecto");
-        closeProjectButton.setBounds(670, 710, 130, 28);
-        add(closeProjectButton);
+    private void initManagementRow() {
+        removeButton = ViewUtils.createButton("Eliminar integrante");
+        transferButton = ViewUtils.createButton("Transferir administración");
+        closeProjectButton = ViewUtils.createButton("Cerrar proyecto");
+        add(ViewUtils.createButtonBar(removeButton, transferButton, closeProjectButton),
+                Cell.at(2, 0).span(3).growX().build());
     }
 }
