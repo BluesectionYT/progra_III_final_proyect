@@ -1,6 +1,7 @@
 package co.edu.uptc.view;
 
 import java.awt.Color;
+import java.awt.Component;
 import java.awt.Dimension;
 import java.awt.Font;
 import java.awt.GridBagLayout;
@@ -12,11 +13,14 @@ import javax.swing.JComboBox;
 import javax.swing.JComponent;
 import javax.swing.JLabel;
 import javax.swing.JList;
+import javax.swing.JOptionPane;
 import javax.swing.JPanel;
 import javax.swing.JPasswordField;
 import javax.swing.JScrollPane;
 import javax.swing.JTable;
 import javax.swing.JTextField;
+import javax.swing.event.AncestorEvent;
+import javax.swing.event.AncestorListener;
 import javax.swing.table.DefaultTableModel;
 
 public class ViewUtils {
@@ -31,18 +35,12 @@ public class ViewUtils {
     private static final int TAB_MARGIN = 15;
     private static final int PANEL_MARGIN = 5;
 
-    private ViewUtils() {
-    }
-
-    // ---------- Paneles ----------
-
     public static JPanel createPanel(Color background) {
         JPanel panel = new JPanel(new GridBagLayout());
         panel.setBackground(background);
         return panel;
     }
 
-    /** Aplica a un panel el estilo común de las pestañas: fondo blanco y margen interior. */
     public static void styleAsTab(JPanel panel) {
         panel.setBackground(Color.WHITE);
         panel.setBorder(BorderFactory.createEmptyBorder(TAB_MARGIN, TAB_MARGIN, TAB_MARGIN, TAB_MARGIN));
@@ -56,13 +54,12 @@ public class ViewUtils {
         return panel;
     }
 
-    public static JPanel createTablePanel(String title, DefaultTableModel model) {
+    public static JPanel createTablePanel(String title, DefaultTableModel model, int... columnWidths) {
         JPanel panel = createTitledPanel(title);
-        panel.add(createTableScroll(model), Cell.at(0, 0).grow().build());
+        panel.add(createTableScroll(model, columnWidths), Cell.at(0, 0).grow().build());
         return panel;
     }
 
-    /** Panel con título y una lista que ocupa {@code columns} columnas (para dejar controles debajo). */
     public static JPanel createListPanel(String title, JList<String> list, int columns) {
         JPanel panel = createTitledPanel(title);
         panel.add(createListScroll(list), Cell.at(0, 0).span(columns).grow().build());
@@ -73,7 +70,6 @@ public class ViewUtils {
         return createListPanel(title, list, 1);
     }
 
-    // ---------- Tablas y listas ----------
 
     public static DefaultTableModel createTableModel(String... columns) {
         return new DefaultTableModel(columns, 0) {
@@ -84,11 +80,14 @@ public class ViewUtils {
         };
     }
 
-    public static JScrollPane createTableScroll(DefaultTableModel model) {
+    public static JScrollPane createTableScroll(DefaultTableModel model, int... columnWidths) {
         JTable table = new JTable(model);
         table.setBackground(Color.WHITE);
         table.setFillsViewportHeight(true);
         table.getTableHeader().setReorderingAllowed(false);
+        for (int i = 0; i < columnWidths.length; i++) {
+            table.getColumnModel().getColumn(i).setPreferredWidth(columnWidths[i]);
+        }
         JScrollPane scroll = new JScrollPane(table);
         scroll.setColumnHeaderView(table.getTableHeader());
         scroll.getViewport().setBackground(Color.WHITE);
@@ -103,7 +102,6 @@ public class ViewUtils {
         return scroll;
     }
 
-    // ---------- Componentes ----------
 
     public static JLabel createLabel(String text) {
         return new JLabel(text);
@@ -134,21 +132,67 @@ public class ViewUtils {
         return button;
     }
 
-    // ---------- Distribución con GridBagLayout ----------
+    public static String askPassword(Component parent, String message) {
+        JPasswordField field = createPasswordField();
+        field.addAncestorListener(new FocusOnShow(field));
+        int option = JOptionPane.showConfirmDialog(parent, createPasswordPrompt(message, field),
+                "Confirmar contraseña", JOptionPane.OK_CANCEL_OPTION, JOptionPane.PLAIN_MESSAGE);
+        if (option != JOptionPane.OK_OPTION) {
+            return null;
+        }
+        String password = new String(field.getPassword());
+        if (password.isEmpty()) {
+            showMessage(parent, "La contraseña es obligatoria.");
+            return null;
+        }
+        return password;
+    }
 
-    /** Fila de formulario: etiqueta en la columna 0 y campo expandible en la columna 1. */
+    static JPanel createPasswordPrompt(String message, JPasswordField field) {
+        JPanel prompt = new JPanel(new GridBagLayout());
+        prompt.setOpaque(false);
+        prompt.add(createLabel(message), Cell.at(0, 0).build());
+        prompt.add(field, Cell.at(1, 0).growX().build());
+        return prompt;
+    }
+
+    public static void showMessage(Component parent, String message) {
+        JOptionPane.showMessageDialog(parent, message, "Aviso", JOptionPane.INFORMATION_MESSAGE);
+    }
+
+    private static class FocusOnShow implements AncestorListener {
+        private final JComponent component;
+
+        FocusOnShow(JComponent component) {
+            this.component = component;
+        }
+
+        @Override
+        public void ancestorAdded(AncestorEvent event) {
+            component.requestFocusInWindow();
+            component.removeAncestorListener(this);
+        }
+
+        @Override
+        public void ancestorRemoved(AncestorEvent event) {
+        }
+
+        @Override
+        public void ancestorMoved(AncestorEvent event) {
+        }
+    }
+
+
     public static void addFormRow(JPanel panel, int row, String labelText, JComponent field) {
         panel.add(createLabel(labelText), Cell.at(row, 0).build());
         panel.add(field, Cell.at(row, 1).growX().build());
     }
 
-    /** Etiqueta en la columna indicada y campo en la siguiente (para filas con varios campos). */
     public static void addLabeledField(JPanel panel, int row, int column, String labelText, JComponent field) {
         panel.add(createLabel(labelText), Cell.at(row, column).build());
         panel.add(field, Cell.at(row, column + 1).growX().build());
     }
 
-    /** Barra de botones alineada a la derecha (un espacio elástico a la izquierda). */
     public static JPanel createButtonBar(JButton... buttons) {
         JPanel bar = createPanel(Color.WHITE);
         bar.setOpaque(false);
@@ -159,7 +203,6 @@ public class ViewUtils {
         return bar;
     }
 
-    /** Relleno invisible que empuja hacia arriba lo que está encima de él. */
     public static void addFiller(JPanel panel, int row, int columns) {
         panel.add(Box.createVerticalGlue(), Cell.at(row, 0).span(columns).growY().build());
     }

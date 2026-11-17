@@ -1,5 +1,7 @@
 package co.edu.uptc.view;
 
+import java.awt.Color;
+
 import javax.swing.JButton;
 import javax.swing.JPanel;
 import javax.swing.JTextField;
@@ -20,11 +22,11 @@ public class ProjectPanel extends SessionPanel {
 
     private void initComponents() {
         addTab("Proyecto", createProjectTab());
-        addTab("Círculo e invitaciones", new CirclePanel());
+        addTab("Círculo e invitaciones", new CirclePanel(true));
     }
 
     private JPanel createProjectTab() {
-        JPanel tab = ViewUtils.createPanel(java.awt.Color.WHITE);
+        JPanel tab = ViewUtils.createPanel(Color.WHITE);
         ViewUtils.styleAsTab(tab);
 
         tab.add(ViewUtils.createLabel("Aún no participas en un proyecto. Crea uno o acepta una invitación en «Círculo e invitaciones»."),
@@ -46,7 +48,15 @@ public class ProjectPanel extends SessionPanel {
 
     private JPanel createActionBar() {
         JButton createButton = ViewUtils.createPrimaryButton("Crear proyecto");
-        createButton.addActionListener(e -> frame.showAdmin(user, nameField.getText()));
+        createButton.addActionListener(e -> createProject());
         return ViewUtils.createButtonBar(createButton);
+    }
+
+    private void createProject() {
+        String password = ViewUtils.askPassword(this, "Confirma tu contraseña para crear el proyecto");
+        if (password != null) {
+            // El controller enviará CREATE_PROJECT con los datos del formulario y la contraseña.
+            frame.showAdmin(user, nameField.getText());
+        }
     }
 }

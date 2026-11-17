@@ -15,8 +15,11 @@ public class TeamPanel extends JPanel {
     private JButton transferButton;
     private JButton closeProjectButton;
 
-    public TeamPanel() {
+    private MainFrame frame;
+
+    public TeamPanel(MainFrame frame) {
         super(new GridBagLayout());
+        this.frame = frame;
         ViewUtils.styleAsTab(this);
         initComponents();
     }
@@ -40,9 +43,53 @@ public class TeamPanel extends JPanel {
 
     private void initManagementRow() {
         removeButton = ViewUtils.createButton("Eliminar integrante");
+        removeButton.addActionListener(e -> removeSelectedMember());
+
         transferButton = ViewUtils.createButton("Transferir administración");
+        transferButton.addActionListener(e -> transferToSelectedMember());
+
         closeProjectButton = ViewUtils.createButton("Cerrar proyecto");
+        closeProjectButton.addActionListener(e -> closeProject());
+
         add(ViewUtils.createButtonBar(removeButton, transferButton, closeProjectButton),
                 Cell.at(2, 0).span(3).growX().build());
+    }
+
+    private String requireSelectedMember() {
+        String member = membersList.getSelectedValue();
+        if (member == null) {
+            ViewUtils.showMessage(this, "Selecciona un integrante de la lista.");
+        }
+        return member;
+    }
+
+    private void removeSelectedMember() {
+        String member = requireSelectedMember();
+        if (member == null) {
+            return;
+        }
+        String password = ViewUtils.askPassword(this, "Confirma tu contraseña para eliminar a " + member);
+        if (password != null) {
+            // El controller enviará REMOVE_MEMBER con el integrante y la contraseña.
+        }
+    }
+
+    private void transferToSelectedMember() {
+        String member = requireSelectedMember();
+        if (member == null) {
+            return;
+        }
+        String password = ViewUtils.askPassword(this, "Confirma tu contraseña para transferir la administración a " + member);
+        if (password != null) {
+            // El controller enviará TRANSFER_ADMIN con el integrante y la contraseña.
+        }
+    }
+
+    private void closeProject() {
+        String password = ViewUtils.askPassword(this, "Confirma tu contraseña para cerrar el proyecto");
+        if (password != null) {
+            // El controller enviará CLOSE_PROJECT y, si el servidor responde ok, se vuelve a la pantalla sin proyecto.
+            frame.showProject();
+        }
     }
 }

@@ -27,18 +27,34 @@ public class MainFrame extends JFrame {
         showPanel(loginPanel);
     }
 
-    private void showProject() {
+    /** Pantalla de un usuario sin proyecto: crear uno o aceptar una invitación. */
+    public void showProject() {
         showPanel(new ProjectPanel(this, getUser()));
     }
 
     public void showAdmin(String user, String projectName) {
-        showPanel(new AdminPanel(this, user, projectName));
+        showWorkspace(user, projectName, ProjectRole.ADMIN);
+    }
+
+    public void showMember(String user, String projectName) {
+        showWorkspace(user, projectName, ProjectRole.MEMBER);
+    }
+
+    public void showWorkspace(String user, String projectName, ProjectRole role) {
+        showPanel(new WorkspacePanel(this, user, projectName, role));
     }
 
     private void showPanel(JPanel panel) {
         setContentPane(panel);
         revalidate();
         repaint();
+    }
+
+    /** Agrega una notificación a la pantalla actual, si es una pantalla con sesión. */
+    public void addNotification(String message) {
+        if (getContentPane() instanceof SessionPanel) {
+            ((SessionPanel) getContentPane()).addNotification(message);
+        }
     }
 
     public String getUser() {
