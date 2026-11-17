@@ -15,15 +15,18 @@ public class CirclePanel extends JPanel {
     private JButton rejectButton;
     private JButton acceptButton;
 
-    public CirclePanel() {
+    /** @param showInvitations false para quien ya está en un proyecto: no puede aceptar invitaciones. */
+    public CirclePanel(boolean showInvitations) {
         super(new GridBagLayout());
         ViewUtils.styleAsTab(this);
-        initComponents();
+        initComponents(showInvitations);
     }
 
-    private void initComponents() {
+    private void initComponents(boolean showInvitations) {
         add(createCirclePanel(), Cell.at(0, 0).grow().build());
-        add(createInvitationsPanel(), Cell.at(0, 1).grow().build());
+        if (showInvitations) {
+            add(createInvitationsPanel(), Cell.at(0, 1).grow().build());
+        }
     }
 
     private JPanel createCirclePanel() {
