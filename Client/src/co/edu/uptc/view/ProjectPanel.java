@@ -1,6 +1,8 @@
 package co.edu.uptc.view;
 
 import java.awt.Color;
+import java.util.HashSet;
+import java.util.Set;
 
 import javax.swing.JButton;
 import javax.swing.JPanel;
@@ -53,10 +55,52 @@ public class ProjectPanel extends SessionPanel {
     }
 
     private void createProject() {
+        if (!validateForm()) {
+            return;
+        }
         String password = ViewUtils.askPassword(this, "Confirma tu contraseña para crear el proyecto");
         if (password != null) {
             // El controller enviará CREATE_PROJECT con los datos del formulario y la contraseña.
             frame.showAdmin(user, nameField.getText());
         }
+    }
+
+    private boolean validateForm() {
+        if (nameField.getText().isBlank()) {
+            return invalid("El nombre del proyecto es obligatorio.");
+        }
+        Double budget = ViewUtils.parseAmount(budgetField.getText());
+        if (budget == null) {
+            return invalid("El presupuesto total debe ser un número mayor que cero.");
+        }
+        return validateCategories(budget);
+    }
+
+    private boolean validateCategories(double budget) {
+        if (categoriesField.getText().isBlank()) {
+            return invalid("Ingresa al menos una categoría con el formato Nombre:monto.");
+        }
+        Set<String> names = new HashSet<>();
+        double total = 0;
+        for (String item : categoriesField.getText().split(",")) {
+            String[] parts = item.split(":");
+            Double amount = parts.length == 2 ? ViewUtils.parseAmount(parts[1]) : null;
+            if (amount == null || parts[0].isBlank()) {
+                return invalid("Categoría inválida: «" + item.trim() + "». Usa el formato Nombre:monto.");
+            }
+            if (!names.add(parts[0].trim().toLowerCase())) {
+                return invalid("La categoría «" + parts[0].trim() + "» está repetida.");
+            }
+            total += amount;
+        }
+        if (total > budget) {
+            return invalid("La suma de las categorías supera el presupuesto total.");
+        }
+        return true;
+    }
+
+    private boolean invalid(String message){
+        ViewUtils.showMessage(this, message);
+        return false;
     }
 }

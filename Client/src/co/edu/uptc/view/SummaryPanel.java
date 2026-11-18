@@ -1,6 +1,7 @@
 package co.edu.uptc.view;
 
 import java.awt.GridBagLayout;
+import java.util.List;
 
 import javax.swing.JLabel;
 import javax.swing.JPanel;
@@ -38,5 +39,21 @@ public class SummaryPanel extends JPanel {
 
         memberModel = ViewUtils.createTableModel("Integrante", "Gasto acumulado");
         add(ViewUtils.createTablePanel("Gasto por integrante", memberModel), Cell.at(2, 1).grow().build());
+    }
+
+    public void setBalance(String balance) {
+        balanceLabel.setText("Saldo disponible: " + balance);
+    }
+
+    public void setSpent(String spent) {
+        spentLabel.setText("Total gastado: " + spent);
+    }
+
+    public void setCategories(List<Object[]> rows) {
+        ViewUtils.setRows(categoryModel, rows);
+    }
+
+    public void setMembers(List<Object[]> rows) {
+        ViewUtils.setRows(memberModel, rows);
     }
 }

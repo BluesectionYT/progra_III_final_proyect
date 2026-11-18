@@ -1,6 +1,7 @@
 package co.edu.uptc.view;
 
 import java.awt.GridBagLayout;
+import java.util.List;
 
 import javax.swing.JButton;
 import javax.swing.JComboBox;
@@ -38,6 +39,7 @@ public class TeamPanel extends JPanel {
         add(inviteCombo, Cell.at(1, 1).growX().build());
 
         inviteButton = ViewUtils.createPrimaryButton("Enviar invitación");
+        inviteButton.addActionListener(e -> inviteSelectedUser());
         add(inviteButton, Cell.at(1, 2).build());
     }
 
@@ -53,6 +55,14 @@ public class TeamPanel extends JPanel {
 
         add(ViewUtils.createButtonBar(removeButton, transferButton, closeProjectButton),
                 Cell.at(2, 0).span(3).growX().build());
+    }
+
+    private void inviteSelectedUser() {
+        if (inviteCombo.getSelectedItem() == null) {
+            ViewUtils.showMessage(this, "Selecciona a quién invitar.");
+        } else {
+            // El controller enviará INVITE_MEMBER con el usuario seleccionado de su círculo.
+        }
     }
 
     private String requireSelectedMember() {
@@ -91,5 +101,13 @@ public class TeamPanel extends JPanel {
             // El controller enviará CLOSE_PROJECT y, si el servidor responde ok, se vuelve a la pantalla sin proyecto.
             frame.showProject();
         }
+    }
+
+    public void setMembers(List<String> members) {
+        ViewUtils.setItems(membersList, members);
+    }
+
+    public void setInviteCandidates(List<String> users) {
+        ViewUtils.setItems(inviteCombo, users);
     }
 }

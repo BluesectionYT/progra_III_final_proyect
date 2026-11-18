@@ -1,6 +1,7 @@
 package co.edu.uptc.view;
 
 import java.awt.GridBagLayout;
+import java.util.List;
 
 import javax.swing.JButton;
 import javax.swing.JComboBox;
@@ -41,7 +42,33 @@ public class RequestsPanel extends JPanel {
         ViewUtils.addFormRow(panel, 2, "Categoría", categoryCombo);
 
         sendButton = ViewUtils.createPrimaryButton("Enviar solicitud");
+        sendButton.addActionListener(e -> sendRequest());
         panel.add(ViewUtils.createButtonBar(sendButton), Cell.at(3, 0).span(2).growX().build());
         return panel;
+    }
+
+    private void sendRequest() {
+        if (conceptField.getText().isBlank()) {
+            ViewUtils.showMessage(this, "El concepto es obligatorio.");
+        } else if (ViewUtils.parseAmount(amountField.getText()) == null) {
+            ViewUtils.showMessage(this, "El monto debe ser un número mayor que cero.");
+        } else if (categoryCombo.getSelectedItem() == null) {
+            ViewUtils.showMessage(this, "Selecciona una categoría.");
+        } else {
+            // El controller enviará CREATE_REQUEST con concepto, monto y categoría.
+        }
+    }
+
+    public void clearForm() {
+        conceptField.setText("");
+        amountField.setText("");
+    }
+
+    public void setCategories(List<String> categories) {
+        ViewUtils.setItems(categoryCombo, categories);
+    }
+
+    public void setRequests(List<Object[]> rows) {
+        ViewUtils.setRows(requestsModel, rows);
     }
 }

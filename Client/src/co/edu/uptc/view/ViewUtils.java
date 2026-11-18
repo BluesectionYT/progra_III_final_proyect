@@ -5,6 +5,9 @@ import java.awt.Component;
 import java.awt.Dimension;
 import java.awt.Font;
 import java.awt.GridBagLayout;
+import java.time.LocalDate;
+import java.time.format.DateTimeParseException;
+import java.util.List;
 
 import javax.swing.BorderFactory;
 import javax.swing.Box;
@@ -81,6 +84,10 @@ public class ViewUtils {
     }
 
     public static JScrollPane createTableScroll(DefaultTableModel model, int... columnWidths) {
+        return createScroll(createTable(model, columnWidths));
+    }
+
+    public static JTable createTable(DefaultTableModel model, int... columnWidths) {
         JTable table = new JTable(model);
         table.setBackground(Color.WHITE);
         table.setFillsViewportHeight(true);
@@ -88,6 +95,10 @@ public class ViewUtils {
         for (int i = 0; i < columnWidths.length; i++) {
             table.getColumnModel().getColumn(i).setPreferredWidth(columnWidths[i]);
         }
+        return table;
+    }
+
+    public static JScrollPane createScroll(JTable table) {
         JScrollPane scroll = new JScrollPane(table);
         scroll.setColumnHeaderView(table.getTableHeader());
         scroll.getViewport().setBackground(Color.WHITE);
@@ -182,6 +193,41 @@ public class ViewUtils {
         }
     }
 
+    public static void setRows(DefaultTableModel model, List<Object[]> rows){
+        model.setRowCount(0);
+        for (Object[] row : rows) {
+            model.addRow(row);
+        }
+    }
+
+    public static void setItems(JComboBox<String> combo, List<String> items) {
+        combo.removeAllItems();
+        for (String item : items) {
+            combo.addItem(item);
+        }
+    }
+
+    public static void setItems(JList<String> list, List<String> items) {
+        list.setListData(items.toArray(new String[0]));
+    }
+
+    public static Double parseAmount(String text) {
+        try {
+            double amount = Double.parseDouble(text.trim());
+            return amount > 0 && !Double.isInfinite(amount) ? amount : null;
+        } catch (NumberFormatException e) {
+            return null;
+        }
+    }
+
+    public static boolean isValidDate(String text) {
+        try {
+            LocalDate.parse(text.trim());
+            return true;
+        } catch (DateTimeParseException e) {
+            return false;
+        }
+    }
 
     public static void addFormRow(JPanel panel, int row, String labelText, JComponent field) {
         panel.add(createLabel(labelText), Cell.at(row, 0).build());

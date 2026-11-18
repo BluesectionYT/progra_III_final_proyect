@@ -1,6 +1,7 @@
 package co.edu.uptc.view;
 
 import java.awt.GridBagLayout;
+import java.util.List;
 
 import javax.swing.JButton;
 import javax.swing.JList;
@@ -38,6 +39,7 @@ public class CirclePanel extends JPanel {
         panel.add(memberField, Cell.at(1, 0).growX().build());
 
         addButton = ViewUtils.createPrimaryButton("Agregar");
+        addButton.addActionListener(e -> addMember());
         panel.add(addButton, Cell.at(1, 1).build());
         return panel;
     }
@@ -48,7 +50,37 @@ public class CirclePanel extends JPanel {
 
         rejectButton = ViewUtils.createButton("Rechazar");
         acceptButton = ViewUtils.createPrimaryButton("Aceptar");
+        rejectButton.addActionListener(e -> answerInvitation(false));
+        acceptButton.addActionListener(e -> answerInvitation(true));
         panel.add(ViewUtils.createButtonBar(rejectButton, acceptButton), Cell.at(1, 0).growX().build());
         return panel;
+    }
+
+    private void addMember() {
+        if (memberField.getText().isBlank()) {
+            ViewUtils.showMessage(this, "Escribe el usuario que quieres agregar a tu círculo.");
+        } else {
+            // El controller enviará ADD_TO_CIRCLE con el usuario escrito.
+        }
+    }
+
+    private void answerInvitation(boolean accept) {
+        if (invitationsList.getSelectedValue() == null) {
+            ViewUtils.showMessage(this, "Selecciona una invitación de la lista.");
+        } else {
+            // El controller enviará ACCEPT_INVITATION o REJECT_INVITATION; si aceptan y el servidor responde ok,
+            // se pasa a la pantalla del proyecto como integrante.
+        }
+    }
+
+    public void setCircle(List<String> members) {
+        ViewUtils.setItems(circleList, members);
+        memberField.setText("");
+    }
+
+    public void setInvitations(List<String> invitations) {
+        if (invitationsList != null) {
+            ViewUtils.setItems(invitationsList, invitations);
+        }
     }
 }

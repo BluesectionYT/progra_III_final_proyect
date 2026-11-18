@@ -1,9 +1,11 @@
 package co.edu.uptc.view;
 
 public class AdminPanel extends SessionPanel {
+    private MainFrame frame;
 
     public AdminPanel(MainFrame frame, String user, String projectName) {
         super(frame, user + " · Administrador de «" + projectName + "»");
+        this.frame = frame;
         initComponents();
     }
 
@@ -12,6 +14,6 @@ public class AdminPanel extends SessionPanel {
         addTab("Solicitudes", new RequestsPanel());
         addTab("Aprobación", new ApprovalPanel());
         addTab("Historial", new HistoryPanel());
-        addTab("Equipo", new TeamPanel());
+        addTab("Equipo", new TeamPanel(frame));
     }
 }

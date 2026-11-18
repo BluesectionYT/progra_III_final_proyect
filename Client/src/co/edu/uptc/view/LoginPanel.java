@@ -52,6 +52,29 @@ public class LoginPanel extends JPanel {
         return form;
     }
 
+    private void login(Runnable onLogin) {
+        errorLabel.setVisible(false);
+        if (!hasCredentials()) {
+            return;
+        }
+        onLogin.run();
+    }
+
+    private void createAccount() {
+        errorLabel.setVisible(false);
+        if (hasCredentials()) {
+            // El controller enviará REGISTER con el usuario y la contraseña.
+        }
+    }
+
+    private boolean hasCredentials() {
+        if (userField.getText().isBlank() || passwordField.getPassword().length == 0) {
+            showError("Ingresa usuario y contraseña");
+            return false;
+        }
+        return true;
+    }
+
     public String getUser() {
         return userField.getText();
     }
@@ -61,6 +84,11 @@ public class LoginPanel extends JPanel {
     }
 
     public void showError() {
+        showError("Usuario o contraseña incorrectos");
+    }
+
+    public void showError(String message) {
+        errorLabel.setText("●  " + message);
         errorLabel.setVisible(true);
     }
 }
