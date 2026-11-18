@@ -12,12 +12,16 @@ public class ExpenseRequest {
     private String reason;
     private LocalDateTime createdAt;
     private LocalDateTime resolvedAt;
-    
+
     public ExpenseRequest(String concept, double amount, Category category, User requester) {
+        this.id = 0;
         this.concept = concept;
         this.amount = amount;
         this.category = category;
         this.requester = requester;
+        this.createdAt = LocalDateTime.now();
+        this.status = RequestStatus.PENDING;
+        this.resolvedAt = null;
     }
 
     public int getId() {
@@ -56,29 +60,31 @@ public class ExpenseRequest {
         return resolvedAt;
     }
 
-    public void approve(String reason){
+    public void approve(String reason) {
         if (reason == null || reason.isBlank()) {
             throw new IllegalArgumentException("El motivo es obligatorio");
         }
-        if (status != RequestStatus.PENDING) {  
-            throw new IllegalStateException("solo se pueden aprovar solicitudes en estado PENDING. Estado actual: " + this.status);
+        if (status != RequestStatus.PENDING) {
+            throw new IllegalStateException("solo se pueden aprobar solicitudes en estado PENDING. Estado actual: " + this.status);
         }
-
         this.status = RequestStatus.APPROVED;
         this.reason = reason;
         this.resolvedAt = LocalDateTime.now();
     }
 
-    public void reject(String reason){
+    public void reject(String reason) {
         if (reason == null || reason.isBlank()) {
             throw new IllegalArgumentException("El motivo es obligatorio");
         }
-        if (status != RequestStatus.PENDING) {  
-            throw new IllegalStateException("solo se pueden aprovar solicitudes en estado PENDING. Estado actual: " + this.status);
+        if (status != RequestStatus.PENDING) {
+            throw new IllegalStateException("solo se pueden rechazar solicitudes en estado PENDING. Estado actual: " + this.status);
         }
-
         this.status = RequestStatus.REJECTED;
         this.reason = reason;
         this.resolvedAt = LocalDateTime.now();
+    }
+    
+    public void setId(int id) {
+        this.id = id;
     }
 }
