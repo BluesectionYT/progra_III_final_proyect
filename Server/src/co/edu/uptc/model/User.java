@@ -57,6 +57,9 @@ public class User {
         if (user == null) {
             throw new IllegalArgumentException("El usuario no puede ser nulo");
         }
+        if (user.equals(this)){
+            throw new IllegalArgumentException("No puedes agregarte a tu propio círculo");
+        }
         if (!isInWorkCircle(user)) {
             this.workCircle.add(user);
         }
@@ -71,7 +74,9 @@ public class User {
         if (project == null) {
             throw new IllegalArgumentException("El proyecto no puede ser nulo");
         }
-
+        if (!project.isActive()){
+            throw new IllegalStateException("El proyecto está inactivo");
+        }
         if (!this.pendingInvitations.contains(project)) {
             this.pendingInvitations.add(project);
         }

@@ -20,14 +20,14 @@ public class Project {
     private Queue<ExpenseRequest> pendingQueue;
 
     public Project(String name, double totalBudget, ArrayList<Category> categories, User admin) {
-        if(name == null || totalBudget <= 0 || categories == null || admin == null) {
+        if (name == null || totalBudget <= 0 || categories == null || admin == null) {
             throw new IllegalArgumentException("Project name and total budget and categories are required");
         }
         this.name = name;
         this.active = true;
         this.totalBudget = totalBudget;
         this.availableBalance = this.totalBudget;
-        this.categories = categories;
+        this.categories = new ArrayList<>(categories);
         this.admin = admin;
         this.members = new ArrayList<>();
         this.requests = new ArrayList<>();
@@ -113,6 +113,9 @@ public class Project {
     }
 
     public void inviteMember(User invitee) {
+        if (!active) {
+            throw new IllegalStateException("Proyecto inactivo");
+        }
         if (invitee.hasProject()) {
             throw new IllegalArgumentException("Usuario existente en otro proyecto");
         }
@@ -172,14 +175,14 @@ public class Project {
         if (request == null) {
             throw new IllegalArgumentException("La solicitud no puede ser nula");
         }
+        if (request.getStatus() != RequestStatus.PENDING) {
+            throw new IllegalStateException("La solicitud ya fue resuelta: " + request.getStatus());
+        }
         if (pendingQueue.peek() != request) {
             throw new IllegalStateException("Debe resolver primero la solicitud más antigua");
         }
         if (!active) {
             throw new IllegalStateException("Proyecto inactivo");
-        }
-        if (request.getStatus() != RequestStatus.PENDING) {
-            throw new IllegalStateException("La solicitud ya fue resuelta: " + request.getStatus());
         }
         if (request.getAmount() > availableBalance) {
             throw new IllegalStateException("Saldo disponible insuficiente");
@@ -199,6 +202,9 @@ public class Project {
         }
         if (reason == null || reason.isBlank()) {
             throw new IllegalArgumentException("La razon no puede ser nula");
+        }
+        if (request.getStatus() != RequestStatus.PENDING) {
+            throw new IllegalStateException("La solicitud ya fue resuelta: " + request.getStatus());
         }
         if (pendingQueue.peek() != request) {
             throw new IllegalStateException("Debe resolver primero la solicitud más antigua");

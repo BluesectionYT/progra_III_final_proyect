@@ -12,6 +12,8 @@ public interface IProjectManager {
 
     void addProject(Project projectToAdd);
 
+    Project findProject(String name);
+
     void removeProject(Project projectToAdd);
 
     ArrayList<User> closeProject(Project project);
