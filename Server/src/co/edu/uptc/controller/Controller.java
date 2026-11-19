@@ -6,6 +6,9 @@ import co.edu.uptc.net.Message;
 import co.edu.uptc.net.MessageCategory;
 import co.edu.uptc.net.Observer;
 import co.edu.uptc.net.Subject;
+import co.edu.uptc.persistence.PersistenceJSON;
+import co.edu.uptc.persistence.StateMapper;
+import co.edu.uptc.persistence.StateSnapshot;
 
 import java.io.IOException;
 import java.net.ServerSocket;
@@ -17,12 +20,16 @@ public class Controller implements Subject {
     private ServerSocket serverSocket;
     private IProjectManager projectManager;
     private ArrayList<Observer> observers;
+    private PersistenceJSON persistence;
 
     public Controller() {
         try {
             this.serverSocket = new ServerSocket(PORT);
             this.observers = new ArrayList<>();
+            this.persistence = new PersistenceJSON();
             this.projectManager = new ProjectManager();
+            StateMapper mapper = new StateMapper();
+            mapper.restore(persistence.readState("data/data.json"), projectManager);
         } catch (IOException e) {
             throw new RuntimeException(e);
         }
