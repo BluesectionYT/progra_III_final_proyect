@@ -1,21 +1,32 @@
 package co.edu.uptc.view;
 
 import java.awt.Dimension;
+import java.awt.event.WindowAdapter;
+import java.awt.event.WindowEvent;
 
 import javax.swing.*;
 
 import co.edu.uptc.controller.Controller;
+import co.edu.uptc.interfaces.IController;
 
 public class MainFrame extends JFrame {
-    private Controller controller;
+    private IController controller;
     private LoginPanel loginPanel;
 
-    public MainFrame(Controller presenter) {
-        this.controller = presenter;
+    public MainFrame(Controller controller) {
+        this.controller = controller;
         setTitle("Gestión de Presupuesto");
         setSize(900, 900);
         setMinimumSize(new Dimension(800, 700));
-        setDefaultCloseOperation(EXIT_ON_CLOSE);
+        setDefaultCloseOperation(DISPOSE_ON_CLOSE);
+        addWindowListener(new WindowAdapter() {
+            @Override
+            public void windowClosing(WindowEvent e) {
+                showGeneralError("Servidor desconectado");
+                controller.sendExit();
+                controller.close();
+            }
+        });
         setLocationRelativeTo(null);
         showLogin();
         setVisible(true);

@@ -21,8 +21,8 @@ public class ListenerThread extends Thread{
                 String line = input.readUTF();
                 clientThread.processData(line);
             } catch (IOException e) {
-                clientThread.closeConnection();
                 connected = false;
+                clientThread.closeConnection();
             }
         }
     }

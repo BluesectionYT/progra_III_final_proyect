@@ -33,17 +33,17 @@ public class ClientThread extends Thread implements Observer {
             listener.start();
             System.out.println("Cliente conectado");
         } catch (IOException e) {
-            this.interrupt();
+            closeConnection();
         }
     }
 
-    public void sendMessage(MessageCategory category, String data) {
-        String message = jsonReader.messageToJson(category, data);
-        if (message != null) {
+    public void sendMessage(Message message) {
+        String messageAsString = jsonReader.messageToJson(message);
+        if (messageAsString != null) {
             try {
-                sender.writeUTF(message);
+                sender.writeUTF(messageAsString);
             } catch (IOException e) {
-                this.interrupt();
+                closeConnection();
             }
         }
     }
@@ -148,6 +148,7 @@ public class ClientThread extends Thread implements Observer {
             case NOTIFY:
                 break;
             case EXIT:
+                closeConnection();
                 break;
         }
     }
@@ -156,14 +157,17 @@ public class ClientThread extends Thread implements Observer {
         try {
             controller.detach(this);
             socket.close();
-            listener.interrupt();
+            if(listener != null){
+                listener.interrupt();
+            }
         } catch (IOException e) {
-            throw new RuntimeException(e);
+            e.printStackTrace();
         }
     }
 
     @Override
     public void update(MessageCategory category, String data) {
-        sendMessage(category, data);
+        Message message = new Message(category, data);
+        sendMessage(message);
     }
 }

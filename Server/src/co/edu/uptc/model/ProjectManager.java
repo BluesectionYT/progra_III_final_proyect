@@ -23,7 +23,15 @@ public class ProjectManager implements IProjectManager {
 
     @Override
     public void addProject(Project projectToAdd) {
+        if (projects.stream().anyMatch(p -> p.getName().equalsIgnoreCase(projectToAdd.getName()))) {
+            throw new IllegalArgumentException("Ya existe un proyecto con ese nombre");
+        }
         projects.add(projectToAdd);
+    }
+
+    @Override
+    public Project findProject(String name) {
+        return projects.stream().filter(p -> p.getName().equals(name)).findFirst().orElse(null);
     }
 
     @Override
@@ -33,6 +41,9 @@ public class ProjectManager implements IProjectManager {
 
     @Override
     public ArrayList<User> closeProject(Project project) {
+        if (!project.isActive()) {
+            throw new IllegalStateException("El proyecto ya está cerrado");
+        }
         ArrayList<User> affected = new ArrayList<>(project.getMembers());
         affected.add(project.getAdmin());
         project.close();

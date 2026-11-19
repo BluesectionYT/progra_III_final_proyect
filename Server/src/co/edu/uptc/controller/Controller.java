@@ -52,7 +52,7 @@ public class Controller implements Subject {
     }
 
     @Override
-    public void notifyAllObservers(ClientThread client, Message data) {
+    public void notifyAllObservers(Observer client, Message data) {
         for (int i = 0; i < observers.size(); i++) {
             Observer observer = observers.get(i);
             if(!observer.equals(client)) {
