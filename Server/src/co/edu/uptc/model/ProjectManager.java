@@ -54,11 +54,23 @@ public class ProjectManager implements IProjectManager {
         return affected;
     }
 
+    @Override
     public ArrayList<Project> getProjects() {
         return projects;
     }
 
+    @Override
     public ArrayList<User> getUsers() {
         return users;
+    }
+
+    @Override
+    public void setProjects(ArrayList<Project> projects) {
+        this.projects = projects;
+    }
+
+    @Override
+    public void setUsers(ArrayList<User> users) {
+        this.users = users;
     }
 }

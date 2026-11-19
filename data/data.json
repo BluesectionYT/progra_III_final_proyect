@@ -1,0 +1,134 @@
+{
+  "users": [
+    {
+      "username": "ana",
+      "passwordHash": "120000$u2GIsK4xi0vWztthfF0hJg==$lVfCRn4mKl/CS3GP4tOZbSZFSNcSy9tXRL29xnvwoW4=",
+      "workCircle": ["luis", "marta", "carlos", "sofia"],
+      "pendingInvitations": []
+    },
+    {
+      "username": "luis",
+      "passwordHash": "120000$xeoc5rGFCp07L8khBrwIrw==$rJKv1bBMJVKPcShI2zOtO4TWf1K3IIZjBC0mS5a9v9U=",
+      "workCircle": ["ana"],
+      "pendingInvitations": []
+    },
+    {
+      "username": "marta",
+      "passwordHash": "120000$3Lc7oQq7YLd3TKnHqw8Cdw==$6ofdVmNaXkiGgghLfqreS3CEiOgMrEo2CGlKf44+aAU=",
+      "workCircle": ["ana", "luis"],
+      "pendingInvitations": []
+    },
+    {
+      "username": "carlos",
+      "passwordHash": "120000$SkWCJxz7avLmZ8H1HXxwvg==$yVUCCFMmfA9kiolSqOboayDt1Gu5FF+W7LhMW0E4jZs=",
+      "workCircle": [],
+      "pendingInvitations": []
+    },
+    {
+      "username": "sofia",
+      "passwordHash": "120000$yuNxFupbfyq+LITnCgwLPA==$VUodrBn8OOhfz825e8faBcoBxW0Q7JLixfwKYMHWAQg=",
+      "workCircle": ["ana"],
+      "pendingInvitations": ["Feria de Ciencias 2026", "Viaje de Grado"]
+    },
+    {
+      "username": "diego",
+      "passwordHash": "120000$43Y+BFiRsrBXw0f9TOvFJg==$FWMNN0NcFYiRNqrm0A7j9pHBBi4QpIBZVdF2r423Abw=",
+      "workCircle": ["paula", "sofia"],
+      "pendingInvitations": []
+    },
+    {
+      "username": "paula",
+      "passwordHash": "120000$LU6/8xCN5paZfSDZcKFOeQ==$783rDBDFLIMFeC0VicjilhtggbMiQxz3Ns7TmvmlrpE=",
+      "workCircle": ["diego"],
+      "pendingInvitations": []
+    },
+    {
+      "username": "valeria",
+      "passwordHash": "120000$cadNRT2v2TE3g1Tyml+oHg==$1y71StJlUHT8KY/gACK0k+bEl8P/BXjlDjbZwKA6xos=",
+      "workCircle": [],
+      "pendingInvitations": []
+    }
+  ],
+  "projects": [
+    {
+      "name": "Feria de Ciencias 2026",
+      "totalBudget": 10000000.0,
+      "admin": "ana",
+      "members": ["luis", "marta", "carlos"],
+      "categories": [
+        { "name": "Logística", "budget": 4000000.0 },
+        { "name": "Materiales", "budget": 3500000.0 },
+        { "name": "Publicidad", "budget": 2500000.0 }
+      ],
+      "requests": [
+        {
+          "id": 0, "concept": "Alquiler de carpas", "amount": 1200000.0,
+          "category": "Logística", "requester": "luis", "status": "APPROVED",
+          "reason": "Dentro del presupuesto",
+          "createdAt": "2026-11-02T09:15:00", "resolvedAt": "2026-11-02T14:30:00"
+        },
+        {
+          "id": 1, "concept": "Cartulinas y marcadores", "amount": 350000.0,
+          "category": "Materiales", "requester": "marta", "status": "APPROVED",
+          "reason": "Necesarios para los stands",
+          "createdAt": "2026-11-03T10:00:00", "resolvedAt": "2026-11-04T08:45:00"
+        },
+        {
+          "id": 2, "concept": "Impresión de afiches", "amount": 800000.0,
+          "category": "Publicidad", "requester": "carlos", "status": "REJECTED",
+          "reason": "Cotizar en otra imprenta",
+          "createdAt": "2026-11-03T16:20:00", "resolvedAt": "2026-11-04T09:00:00"
+        },
+        {
+          "id": 3, "concept": "Transporte de equipos", "amount": 600000.0,
+          "category": "Logística", "requester": "luis", "status": "APPROVED",
+          "reason": "Aprobado",
+          "createdAt": "2026-11-05T11:05:00", "resolvedAt": "2026-11-05T17:40:00"
+        },
+        {
+          "id": 4, "concept": "Kits de experimentos", "amount": 3300000.0,
+          "category": "Materiales", "requester": "marta", "status": "PENDING",
+          "reason": null,
+          "createdAt": "2026-11-09T15:10:00", "resolvedAt": null
+        },
+        {
+          "id": 5, "concept": "Pendones y banners", "amount": 1000000.0,
+          "category": "Publicidad", "requester": "carlos", "status": "PENDING",
+          "reason": null,
+          "createdAt": "2026-11-10T08:30:00", "resolvedAt": null
+        },
+        {
+          "id": 6, "concept": "Refrigerios de la jornada", "amount": 150000.0,
+          "category": "Logística", "requester": "valeria", "status": "PENDING",
+          "reason": null,
+          "createdAt": "2026-11-11T13:00:00", "resolvedAt": null
+        }
+      ]
+    },
+    {
+      "name": "Viaje de Grado",
+      "totalBudget": 5000000.0,
+      "admin": "diego",
+      "members": ["paula"],
+      "categories": [
+        { "name": "Transporte", "budget": 2000000.0 },
+        { "name": "Hospedaje", "budget": 2500000.0 },
+        { "name": "Alimentación", "budget": 500000.0 }
+      ],
+      "requests": [
+        {
+          "id": 0, "concept": "Reserva de bus", "amount": 1500000.0,
+          "category": "Transporte", "requester": "paula", "status": "APPROVED",
+          "reason": "Cotización más baja",
+          "createdAt": "2026-11-06T10:00:00", "resolvedAt": "2026-11-06T12:00:00"
+        },
+        {
+          "id": 1, "concept": "Hotel tres noches", "amount": 2600000.0,
+          "category": "Hospedaje", "requester": "paula", "status": "PENDING",
+          "reason": null,
+          "createdAt": "2026-11-12T09:00:00", "resolvedAt": null
+        }
+      ]
+    }
+  ]
+}
