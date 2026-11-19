@@ -10,6 +10,9 @@ import java.io.*;
 import java.net.Socket;
 import java.util.Map;
 
+import javax.swing.JOptionPane;
+import javax.swing.SwingUtilities;
+
 public class Controller implements IController {
     private static final int PORT = 10087;
     private static final String HOST = "localhost";
@@ -18,6 +21,7 @@ public class Controller implements IController {
     private ListenerThread listener;
     private DataOutputStream sender;
     private JSONReader jsonReader;
+    private boolean closed;
 
     public Controller() {
         try {
@@ -26,8 +30,7 @@ public class Controller implements IController {
             this.sender = new DataOutputStream(socket.getOutputStream());
             this.jsonReader = new JSONReader();
         } catch (IOException e) {
-            frame.showGeneralError("Servidor inaccessible");
-            close();
+            close("No se pudo conectar con el servidor (" + HOST + ":" + PORT + ").\nVerifica que esté en ejecución.");
         }
     }
 
@@ -37,7 +40,37 @@ public class Controller implements IController {
     }
 
     public void close() {
+        close("Se perdió la conexión con el servidor");
+    }
+
+    public void close(String message) {
+        synchronized (this) {
+            if (closed) return;
+            closed = true;
+        }
+        if (message != null) {
+            showMessage(message);
+        }
         System.exit(0);
+    }
+
+    private void showMessage(String message) {
+        Runnable show = () -> {
+            if (frame != null) {
+                frame.showGeneralError(message);
+            } else {
+                JOptionPane.showMessageDialog(null, message, "Error", JOptionPane.ERROR_MESSAGE);
+            }
+        };
+        try {
+            if (SwingUtilities.isEventDispatchThread()) {
+                show.run();
+            } else {
+                SwingUtilities.invokeAndWait(show);
+            }
+        } catch (Exception e) {
+            
+        }
     }
 
     public void processData(String data) {
@@ -144,18 +177,19 @@ public class Controller implements IController {
         }
     }
 
-    public void sendData(Message message) {
-        String lineToSend = jsonReader.messageToJson(message);
+    public synchronized void sendData(Message message) {
+        if (sender == null || message == null) return;
+
         try {
-            sender.writeUTF(lineToSend);
+            sender.writeUTF(jsonReader.messageToJson(message));
+            sender.flush();
         } catch (IOException e) {
-            e.printStackTrace();
+            close();
         }
     }
 
     public void sendExit() {
-        Message message = new Message(MessageCategory.EXIT, "");
-        sendData(message);
+        sendData(new Message(MessageCategory.EXIT, ""));
     }
 
     @Override
@@ -235,6 +269,40 @@ public class Controller implements IController {
 
     @Override
     public void leaveProject() {
+
+    }
+
+    @Override
+    public void getCircle() {
+
+    }
+    @Override
+    public void getInvitations() {
+
+    }
+
+    @Override
+    public void getProjectInfo() {
+
+    }
+
+    @Override
+    public void getSummary() {
+
+    }
+
+    @Override
+    public void getMyRequests() {
+
+    }
+
+    @Override
+    public void getPending() {
+
+    }
+
+    @Override
+    public void getTeam() {
 
     }
 }

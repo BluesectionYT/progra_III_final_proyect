@@ -1,6 +1,7 @@
 package co.edu.uptc.controller;
 
 import co.edu.uptc.interfaces.IProjectManager;
+import co.edu.uptc.model.User;
 import co.edu.uptc.net.JSONReader;
 import co.edu.uptc.net.Message;
 import co.edu.uptc.net.MessageCategory;
@@ -9,6 +10,10 @@ import co.edu.uptc.net.Observer;
 import java.io.DataOutputStream;
 import java.io.IOException;
 import java.net.Socket;
+import java.util.HashMap;
+import java.util.Map;
+
+import com.google.gson.Gson;
 
 public class ClientThread extends Thread implements Observer {
     private IProjectManager projectManager;
@@ -16,6 +21,7 @@ public class ClientThread extends Thread implements Observer {
     private DataOutputStream sender;
     private ListenerThread listener;
     private Controller controller;
+    private User user;
     private JSONReader jsonReader;
 
     public ClientThread(Socket socket, IProjectManager projectManager, Controller controller) {
@@ -154,12 +160,12 @@ public class ClientThread extends Thread implements Observer {
     }
 
     public void closeConnection() {
+        controller.detach(this);
+        if (listener != null) {
+            listener.interrupt();
+        }
         try {
-            controller.detach(this);
             socket.close();
-            if(listener != null){
-                listener.interrupt();
-            }
         } catch (IOException e) {
             e.printStackTrace();
         }
@@ -169,5 +175,32 @@ public class ClientThread extends Thread implements Observer {
     public void update(MessageCategory category, String data) {
         Message message = new Message(category, data);
         sendMessage(message);
+    }
+
+    public void sendResponse(boolean ok, String errorMsg, MessageCategory category, Object extraData) {
+        Map<String, Object> responseContent = new HashMap<>();
+        responseContent.put("ok", ok);
+        
+        if (!ok && errorMsg != null) responseContent.put("error", errorMsg);
+        
+        if (extraData != null) responseContent.put("data", extraData);
+
+        Gson gson = new Gson();
+        String jsonString = gson.toJson(responseContent);
+
+        Message responseMessage = new Message(category, jsonString);
+        try {
+            sender.writeUTF(gson.toJson(responseMessage));
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+    }
+
+    public User getUser() {
+        return user;
+    }
+
+    public void setUser(User user) {
+        this.user = user;
     }
 }

@@ -9,6 +9,8 @@ import javax.swing.JComponent;
 import javax.swing.JPanel;
 import javax.swing.JTabbedPane;
 
+import co.edu.uptc.interfaces.IController;
+
 public abstract class SessionPanel extends JPanel {
     public static final String TAB_NOTIFICATIONS = "Notificaciones";
 
@@ -17,20 +19,23 @@ public abstract class SessionPanel extends JPanel {
     private List<JButton> headerButtonList = new ArrayList<>();
     private NotificationsPanel notificationsPanel;
 
-    protected SessionPanel(MainFrame frame, String headerText) {
+    protected SessionPanel(MainFrame frame, IController controller, String headerText) {
         super(new GridBagLayout());
         setBackground(ViewUtils.BACKGROUND);
-        initHeader(frame, headerText);
+        initHeader(frame, controller, headerText);
         initTabs();
     }
 
-    private void initHeader(MainFrame frame, String headerText) {
+    private void initHeader(MainFrame frame, IController controller, String headerText) {
         add(ViewUtils.createLabel(headerText), Cell.at(0, 0).growX().insets(10, 20, 5, 5).build());
         headerButtons = ViewUtils.createPanel(ViewUtils.BACKGROUND);
         headerButtons.setOpaque(false);
         add(headerButtons, Cell.at(0, 1).east().insets(10, 5, 5, 20).build());
         JButton logoutButton = ViewUtils.createButton("Cerrar sesión");
-        logoutButton.addActionListener(e -> frame.showLogin());
+        logoutButton.addActionListener(e -> {
+            controller.logout();
+            frame.showLogin();
+        });
         headerButtonList.add(logoutButton);
         rebuildHeaderButtons();
     }

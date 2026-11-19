@@ -11,11 +11,14 @@ import javax.swing.JTable;
 import javax.swing.JTextField;
 import javax.swing.table.DefaultTableModel;
 
+import co.edu.uptc.interfaces.IController;
+
 public class ApprovalPanel extends JPanel {
     private static final String NO_ERROR = " ";
     private static final String BALANCE_TEXT = "Solicitudes pendientes en orden de llegada (FIFO). Saldo disponible: ";
     private static final String REASON_REQUIRED = "●  El motivo es obligatorio";
 
+    private IController controller;
     private JLabel infoLabel;
     private DefaultTableModel pendingModel;
     private JTable pendingTable;
@@ -24,8 +27,9 @@ public class ApprovalPanel extends JPanel {
     private JButton rejectButton;
     private JButton approveButton;
 
-    public ApprovalPanel() {
+    public ApprovalPanel(IController controller) {
         super(new GridBagLayout());
+        this.controller = controller;
         ViewUtils.styleAsTab(this);
         initComponents();
     }
@@ -59,12 +63,19 @@ public class ApprovalPanel extends JPanel {
     }
 
     private void decide(boolean approve) {
-        if (pendingTable.getSelectedRow() < 0) {
+        int row = pendingTable.getSelectedRow();
+        if (row < 0) {
             ViewUtils.showMessage(this, "Selecciona una solicitud de la lista.");
             return;
         }
         if (validateReason()) {
-            // El controller enviará APPROVE_REQUEST o REJECT_REQUEST con el # de la solicitud y el motivo.
+            int id = Integer.parseInt(pendingModel.getValueAt(pendingTable.convertRowIndexToModel(row), 0).toString());
+            String reason = reasonField.getText().trim();
+            if (approve) {
+                controller.approveRequest(id, reason);
+            } else {
+                controller.rejectRequest(id, reason);
+            }
         }
     }
 
