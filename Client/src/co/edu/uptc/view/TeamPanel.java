@@ -8,7 +8,10 @@ import javax.swing.JComboBox;
 import javax.swing.JList;
 import javax.swing.JPanel;
 
+import co.edu.uptc.interfaces.IController;
+
 public class TeamPanel extends JPanel {
+    private IController controller;
     private JList<String> membersList;
     private JComboBox<String> inviteCombo;
     private JButton inviteButton;
@@ -18,9 +21,10 @@ public class TeamPanel extends JPanel {
 
     private MainFrame frame;
 
-    public TeamPanel(MainFrame frame) {
+    public TeamPanel(MainFrame frame, IController controller) {
         super(new GridBagLayout());
         this.frame = frame;
+        this.controller = controller;
         ViewUtils.styleAsTab(this);
         initComponents();
     }
@@ -57,7 +61,7 @@ public class TeamPanel extends JPanel {
         if (inviteCombo.getSelectedItem() == null) {
             ViewUtils.showMessage(this, "Selecciona a quién invitar.");
         } else {
-            // El controller enviará INVITE_MEMBER con el usuario seleccionado de su círculo.
+            controller.inviteMember((String) inviteCombo.getSelectedItem());
         }
     }
 
@@ -76,7 +80,7 @@ public class TeamPanel extends JPanel {
         }
         String password = ViewUtils.askPassword(this, "Confirma tu contraseña para eliminar a " + member);
         if (password != null) {
-            // El controller enviará REMOVE_MEMBER con el integrante y la contraseña.
+            controller.removeMember(member, password);
         }
     }
 
@@ -87,14 +91,14 @@ public class TeamPanel extends JPanel {
         }
         String password = ViewUtils.askPassword(this, "Confirma tu contraseña para transferir la administración a " + member);
         if (password != null) {
-            // El controller enviará TRANSFER_ADMIN con el integrante y la contraseña.
+            controller.transferAdmin(member, password);
         }
     }
 
     private void closeProject() {
         String password = ViewUtils.askPassword(this, "Confirma tu contraseña para cerrar el proyecto");
         if (password != null) {
-            // El controller enviará CLOSE_PROJECT y, si el servidor responde ok, se vuelve a la pantalla sin proyecto.
+            controller.closeProject(password);
             frame.showProject();
         }
     }

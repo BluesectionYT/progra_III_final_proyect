@@ -9,9 +9,12 @@ import javax.swing.JPanel;
 import javax.swing.JTextField;
 import javax.swing.table.DefaultTableModel;
 
+import co.edu.uptc.interfaces.IController;
+
 public class HistoryPanel extends JPanel {
     private static final String DATE_HINT = "Formato AAAA-MM-DD";
 
+    private IController controller;
     private JComboBox<String> categoryCombo;
     private JComboBox<String> statusCombo;
     private JTextField fromField;
@@ -20,8 +23,9 @@ public class HistoryPanel extends JPanel {
     private JButton applyButton;
     private DefaultTableModel historyModel;
 
-    public HistoryPanel() {
+    public HistoryPanel(IController controller) {
         super(new GridBagLayout());
+        this.controller = controller;
         ViewUtils.styleAsTab(this);
         initComponents();
     }
@@ -65,7 +69,8 @@ public class HistoryPanel extends JPanel {
         } else if (!from.isEmpty() && !to.isEmpty() && from.compareTo(to) > 0) {
             ViewUtils.showMessage(this, "La fecha «Desde» no puede ser posterior a «Hasta».");
         } else {
-            // El controller enviará GET_HISTORY con categoría, estado, rango de fechas y orden.
+            controller.getHistory((String) categoryCombo.getSelectedItem(), (String) statusCombo.getSelectedItem(),
+                    from, to, (String) orderCombo.getSelectedItem());
         }
     }
 

@@ -19,4 +19,15 @@ public interface IController {
     void transferAdmin(String user, String password);
     void closeProject(String password);
     void leaveProject();
+    void sendExit();
+    void close();
+    void close(String message);
+    void processData(String message);
+    void getCircle();
+    void getInvitations();
+    void getProjectInfo();
+    void getSummary();
+    void getMyRequests();
+    void getPending();
+    void getTeam();
 }

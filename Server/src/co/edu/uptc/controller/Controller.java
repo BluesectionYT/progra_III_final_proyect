@@ -3,6 +3,7 @@ package co.edu.uptc.controller;
 import co.edu.uptc.interfaces.IProjectManager;
 import co.edu.uptc.model.ProjectManager;
 import co.edu.uptc.net.Message;
+import co.edu.uptc.net.MessageCategory;
 import co.edu.uptc.net.Observer;
 import co.edu.uptc.net.Subject;
 
@@ -39,6 +40,19 @@ public class Controller implements Subject {
             e.printStackTrace();
         }
     }
+
+    public void notifyUser(String username, MessageCategory category, Object data) {
+    for (Observer obs : observers) { 
+        if (obs instanceof ClientThread) {
+            ClientThread client = (ClientThread) obs;
+            
+            if (client.getUser() != null && client.getUser().getUsername().equals(username)) {
+                client.sendResponse(true, null, category, data);
+                break;
+            }
+        }
+    }
+}
 
     @Override
     public void attach(Observer observer) {

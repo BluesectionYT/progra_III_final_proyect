@@ -9,15 +9,19 @@ import javax.swing.JPanel;
 import javax.swing.JTextField;
 import javax.swing.table.DefaultTableModel;
 
+import co.edu.uptc.interfaces.IController;
+
 public class RequestsPanel extends JPanel {
+    private IController controller;
     private JTextField conceptField;
     private JTextField amountField;
     private JComboBox<String> categoryCombo;
     private JButton sendButton;
     private DefaultTableModel requestsModel;
 
-    public RequestsPanel() {
+    public RequestsPanel(IController controller) {
         super(new GridBagLayout());
+        this.controller = controller;
         ViewUtils.styleAsTab(this);
         initComponents();
     }
@@ -43,14 +47,15 @@ public class RequestsPanel extends JPanel {
     }
 
     private void sendRequest() {
+        Double amount = ViewUtils.parseAmount(amountField.getText());
         if (conceptField.getText().isBlank()) {
             ViewUtils.showMessage(this, "El concepto es obligatorio.");
-        } else if (ViewUtils.parseAmount(amountField.getText()) == null) {
+        } else if (amount == null) {
             ViewUtils.showMessage(this, "El monto debe ser un número mayor que cero.");
         } else if (categoryCombo.getSelectedItem() == null) {
             ViewUtils.showMessage(this, "Selecciona una categoría.");
         } else {
-            // El controller enviará CREATE_REQUEST con concepto, monto y categoría.
+            controller.createRequest(conceptField.getText().trim(), amount, (String) categoryCombo.getSelectedItem());
         }
     }
 

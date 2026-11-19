@@ -6,14 +6,13 @@ import java.awt.event.WindowEvent;
 
 import javax.swing.*;
 
-import co.edu.uptc.controller.Controller;
 import co.edu.uptc.interfaces.IController;
 
 public class MainFrame extends JFrame {
     private IController controller;
     private LoginPanel loginPanel;
 
-    public MainFrame(Controller controller) {
+    public MainFrame(IController controller) {
         this.controller = controller;
         setTitle("Gestión de Presupuesto");
         setSize(900, 900);
@@ -22,9 +21,8 @@ public class MainFrame extends JFrame {
         addWindowListener(new WindowAdapter() {
             @Override
             public void windowClosing(WindowEvent e) {
-                showGeneralError("Servidor desconectado");
                 controller.sendExit();
-                controller.close();
+                controller.close(null);
             }
         });
         setLocationRelativeTo(null);
@@ -33,12 +31,12 @@ public class MainFrame extends JFrame {
     }
 
     public void showLogin() {
-        loginPanel = new LoginPanel(this::showProject);
+        loginPanel = new LoginPanel(controller, this::showProject);
         showPanel(loginPanel);
     }
 
     public void showProject() {
-        showPanel(new ProjectPanel(this, getUser()));
+        showPanel(new ProjectPanel(this, controller, getUser()));
     }
 
     public void showAdmin(String user, String projectName) {
@@ -50,7 +48,7 @@ public class MainFrame extends JFrame {
     }
 
     public void showWorkspace(String user, String projectName, ProjectRole role) {
-        showPanel(new WorkspacePanel(this, user, projectName, role));
+        showPanel(new WorkspacePanel(this,controller, user, projectName, role));
     }
 
     private void showPanel(JPanel panel) {

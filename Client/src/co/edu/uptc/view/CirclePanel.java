@@ -8,7 +8,10 @@ import javax.swing.JList;
 import javax.swing.JPanel;
 import javax.swing.JTextField;
 
+import co.edu.uptc.interfaces.IController;
+
 public class CirclePanel extends JPanel {
+    private IController controller;
     private JList<String> circleList;
     private JTextField memberField;
     private JButton addButton;
@@ -16,8 +19,9 @@ public class CirclePanel extends JPanel {
     private JButton rejectButton;
     private JButton acceptButton;
 
-    public CirclePanel(boolean showInvitations) {
+    public CirclePanel(IController controller, boolean showInvitations) {
         super(new GridBagLayout());
+        this.controller = controller;
         ViewUtils.styleAsTab(this);
         initComponents(showInvitations);
     }
@@ -56,16 +60,18 @@ public class CirclePanel extends JPanel {
         if (memberField.getText().isBlank()) {
             ViewUtils.showMessage(this, "Escribe el usuario que quieres agregar a tu círculo.");
         } else {
-            // El controller enviará ADD_TO_CIRCLE con el usuario escrito.
+            controller.addToCircle(memberField.getText().trim());
         }
     }
 
     private void answerInvitation(boolean accept) {
-        if (invitationsList.getSelectedValue() == null) {
+        String invitation = invitationsList.getSelectedValue();
+        if (invitation == null) {
             ViewUtils.showMessage(this, "Selecciona una invitación de la lista.");
+        } else if (accept) {
+            controller.acceptInvitation(invitation);
         } else {
-            // El controller enviará ACCEPT_INVITATION o REJECT_INVITATION; si aceptan y el servidor responde ok,
-            // se pasa a la pantalla del proyecto como integrante.
+            controller.rejectInvitation(invitation);
         }
     }
 

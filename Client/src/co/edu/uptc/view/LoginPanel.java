@@ -9,15 +9,19 @@ import javax.swing.JPasswordField;
 import javax.swing.JTextField;
 import javax.swing.SwingConstants;
 
+import co.edu.uptc.interfaces.IController;
+
 public class LoginPanel extends JPanel {
+    private IController controller;
     private JTextField userField;
     private JPasswordField passwordField;
     private JButton createAccountButton;
     private JButton loginButton;
     private JLabel errorLabel;
 
-    public LoginPanel(Runnable onLogin) {
+    public LoginPanel(IController controller, Runnable onLogin) {
         super(new GridBagLayout());
+        this.controller = controller;
         setBackground(ViewUtils.BACKGROUND);
         initComponents(onLogin);
     }
@@ -40,6 +44,7 @@ public class LoginPanel extends JPanel {
         ViewUtils.addFormRow(form, 2, "Contraseña", passwordField);
 
         createAccountButton = ViewUtils.createButton("Crear cuenta");
+        createAccountButton.addActionListener(e -> createAccount());
         loginButton = ViewUtils.createPrimaryButton("Ingresar");
         loginButton.addActionListener(e -> onLogin.run());
         form.add(ViewUtils.createButtonBar(createAccountButton, loginButton), Cell.at(3, 0).span(2).growX().build());
@@ -63,7 +68,7 @@ public class LoginPanel extends JPanel {
     private void createAccount() {
         errorLabel.setVisible(false);
         if (hasCredentials()) {
-            // El controller enviará REGISTER con el usuario y la contraseña.
+            controller.register(getUser(), getPassword());
         }
     }
 

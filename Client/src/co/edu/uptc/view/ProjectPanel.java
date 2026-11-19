@@ -2,29 +2,36 @@ package co.edu.uptc.view;
 
 import java.awt.Color;
 import java.util.HashSet;
+import java.util.LinkedHashMap;
+import java.util.Map;
 import java.util.Set;
 
 import javax.swing.JButton;
 import javax.swing.JPanel;
 import javax.swing.JTextField;
 
+import co.edu.uptc.interfaces.IController;
+
 public class ProjectPanel extends SessionPanel {
+    private IController controller;
     private MainFrame frame;
     private String user;
     private JTextField nameField;
     private JTextField budgetField;
     private JTextField categoriesField;
+    private Map<String, Double> categories;
 
-    public ProjectPanel(MainFrame frame, String user) {
-        super(frame, user + " · Sin proyecto");
+    public ProjectPanel(MainFrame frame,IController controller, String user) {
+        super(frame, controller, user + " · Sin proyecto");
         this.frame = frame;
+        this.controller = controller;
         this.user = user;
         initComponents();
     }
 
     private void initComponents() {
         addTab("Proyecto", createProjectTab());
-        addTab("Círculo e invitaciones", new CirclePanel(true));
+        addTab("Círculo e invitaciones", new CirclePanel(controller, true));
     }
 
     private JPanel createProjectTab() {
@@ -55,7 +62,8 @@ public class ProjectPanel extends SessionPanel {
         }
         String password = ViewUtils.askPassword(this, "Confirma tu contraseña para crear el proyecto");
         if (password != null) {
-            // El controller enviará CREATE_PROJECT con los datos del formulario y la contraseña.
+            double budget = ViewUtils.parseAmount(budgetField.getText());
+            controller.createProject(nameField.getText().trim(), budget, categories, password);
             frame.showAdmin(user, nameField.getText());
         }
     }
@@ -76,6 +84,7 @@ public class ProjectPanel extends SessionPanel {
             return invalid("Ingresa al menos una categoría con el formato Nombre:monto.");
         }
         Set<String> names = new HashSet<>();
+        categories = new LinkedHashMap<>();
         double total = 0;
         for (String item : categoriesField.getText().split(",")) {
             String[] parts = item.split(":");
@@ -86,6 +95,7 @@ public class ProjectPanel extends SessionPanel {
             if (!names.add(parts[0].trim().toLowerCase())) {
                 return invalid("La categoría «" + parts[0].trim() + "» está repetida.");
             }
+            categories.put(parts[0].trim(), amount);
             total += amount;
         }
         if (total > budget) {

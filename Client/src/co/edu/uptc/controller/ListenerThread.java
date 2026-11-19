@@ -3,11 +3,13 @@ package co.edu.uptc.controller;
 import java.io.*;
 import java.net.Socket;
 
+import co.edu.uptc.interfaces.IController;
+
 public class ListenerThread extends Thread {
     private DataInputStream input;
-    private Controller controller;
+    private IController controller;
 
-    public ListenerThread(Controller controller, Socket socket) throws IOException {
+    public ListenerThread(IController controller, Socket socket) throws IOException {
         this.controller = controller;
         this.input = new DataInputStream(socket.getInputStream());
     }
@@ -21,7 +23,7 @@ public class ListenerThread extends Thread {
                 controller.processData(line);
             } catch (IOException e) {
                 connected = false;
-                controller.close();
+                controller.close("conexion perdida");
             }
         }
     }
