@@ -2,6 +2,7 @@ package co.edu.uptc.controller;
 
 import co.edu.uptc.interfaces.IProjectManager;
 import co.edu.uptc.model.ProjectManager;
+import co.edu.uptc.net.Message;
 import co.edu.uptc.net.Observer;
 import co.edu.uptc.net.Subject;
 
@@ -51,11 +52,11 @@ public class Controller implements Subject {
     }
 
     @Override
-    public void notifyAllObservers(ClientThread client, String[] data) {
+    public void notifyAllObservers(ClientThread client, Message data) {
         for (int i = 0; i < observers.size(); i++) {
             Observer observer = observers.get(i);
             if(!observer.equals(client)) {
-                observer.update(data[0], data[1]);
+                observer.update(data.getCategory(), data.getText());
             }
         }
     }

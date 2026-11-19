@@ -33,21 +33,17 @@ public class ApprovalPanel extends JPanel {
     private void initComponents() {
         infoLabel = new JLabel(BALANCE_TEXT);
         add(infoLabel, Cell.at(0, 0).growX().build());
-
         pendingModel = ViewUtils.createTableModel("#", "Fecha", "Integrante", "Concepto", "Categoría", "Monto");
         pendingTable = ViewUtils.createTable(pendingModel);
         add(ViewUtils.createScroll(pendingTable), Cell.at(1, 0).grow().build());
-
         add(createReasonRow(), Cell.at(2, 0).growX().build());
         add(createActionBar(), Cell.at(3, 0).growX().build());
     }
 
     private JPanel createReasonRow() {
         JPanel row = ViewUtils.createPanel(Color.WHITE);
-
         reasonField = ViewUtils.createTextField();
         ViewUtils.addFormRow(row, 0, "Motivo", reasonField);
-
         reasonErrorLabel = new JLabel(NO_ERROR);
         reasonErrorLabel.setForeground(ViewUtils.ERROR);
         row.add(reasonErrorLabel, Cell.at(1, 1).build());
@@ -57,10 +53,8 @@ public class ApprovalPanel extends JPanel {
     private JPanel createActionBar() {
         rejectButton = ViewUtils.createButton("Rechazar");
         rejectButton.addActionListener(e -> decide(false));
-
         approveButton = ViewUtils.createPrimaryButton("Aprobar");
         approveButton.addActionListener(e -> decide(true));
-
         return ViewUtils.createButtonBar(rejectButton, approveButton);
     }
 
@@ -74,7 +68,6 @@ public class ApprovalPanel extends JPanel {
         }
     }
 
-    /** El motivo es obligatorio tanto al aprobar como al rechazar. */
     private boolean validateReason() {
         boolean valid = !reasonField.getText().isBlank();
         reasonErrorLabel.setText(valid ? NO_ERROR : REASON_REQUIRED);

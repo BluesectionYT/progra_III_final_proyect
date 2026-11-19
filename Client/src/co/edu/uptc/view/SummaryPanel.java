@@ -28,7 +28,6 @@ public class SummaryPanel extends JPanel {
         balanceLabel = new JLabel("Saldo disponible: ");
         balanceLabel.setFont(ViewUtils.HIGHLIGHT_FONT);
         add(balanceLabel, Cell.at(0, 0).span(2).build());
-
         spentLabel = new JLabel("Total gastado: ");
         add(spentLabel, Cell.at(1, 0).span(2).build());
     }
@@ -36,7 +35,6 @@ public class SummaryPanel extends JPanel {
     private void initTables() {
         categoryModel = ViewUtils.createTableModel("Categoría", "Presupuesto", "Gastado", "Uso");
         add(ViewUtils.createTablePanel("Consumo por categoría", categoryModel), Cell.at(2, 0).grow().build());
-
         memberModel = ViewUtils.createTableModel("Integrante", "Gasto acumulado");
         add(ViewUtils.createTablePanel("Gasto por integrante", memberModel), Cell.at(2, 1).grow().build());
     }

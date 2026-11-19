@@ -16,7 +16,6 @@ public class CirclePanel extends JPanel {
     private JButton rejectButton;
     private JButton acceptButton;
 
-    /** @param showInvitations false para quien ya está en un proyecto: no puede aceptar invitaciones. */
     public CirclePanel(boolean showInvitations) {
         super(new GridBagLayout());
         ViewUtils.styleAsTab(this);
@@ -33,11 +32,9 @@ public class CirclePanel extends JPanel {
     private JPanel createCirclePanel() {
         circleList = new JList<>();
         JPanel panel = ViewUtils.createListPanel("Mi círculo de trabajo", circleList, 2);
-
         memberField = ViewUtils.createTextField();
         memberField.setColumns(1);
         panel.add(memberField, Cell.at(1, 0).growX().build());
-
         addButton = ViewUtils.createPrimaryButton("Agregar");
         addButton.addActionListener(e -> addMember());
         panel.add(addButton, Cell.at(1, 1).build());
@@ -47,7 +44,6 @@ public class CirclePanel extends JPanel {
     private JPanel createInvitationsPanel() {
         invitationsList = new JList<>();
         JPanel panel = ViewUtils.createListPanel("Invitaciones recibidas", invitationsList);
-
         rejectButton = ViewUtils.createButton("Rechazar");
         acceptButton = ViewUtils.createPrimaryButton("Aceptar");
         rejectButton.addActionListener(e -> answerInvitation(false));

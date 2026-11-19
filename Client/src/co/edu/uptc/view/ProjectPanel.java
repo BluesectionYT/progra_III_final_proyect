@@ -30,19 +30,14 @@ public class ProjectPanel extends SessionPanel {
     private JPanel createProjectTab() {
         JPanel tab = ViewUtils.createPanel(Color.WHITE);
         ViewUtils.styleAsTab(tab);
-
         tab.add(ViewUtils.createLabel("Aún no participas en un proyecto. Crea uno o acepta una invitación en «Círculo e invitaciones»."),
                 Cell.at(0, 0).span(2).insets(5, 5, 20, 5).build());
-
         nameField = ViewUtils.createTextField();
         ViewUtils.addFormRow(tab, 1, "Nombre del proyecto", nameField);
-
         budgetField = ViewUtils.createTextField();
         ViewUtils.addFormRow(tab, 2, "Presupuesto total ($)", budgetField);
-
         categoriesField = ViewUtils.createTextField();
         ViewUtils.addFormRow(tab, 3, "Categorías (Nombre:monto, ...)", categoriesField);
-
         ViewUtils.addFiller(tab, 4, 2);
         tab.add(createActionBar(), Cell.at(5, 0).span(2).growX().build());
         return tab;

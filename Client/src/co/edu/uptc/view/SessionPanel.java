@@ -9,10 +9,6 @@ import javax.swing.JComponent;
 import javax.swing.JPanel;
 import javax.swing.JTabbedPane;
 
-/**
- * Estructura común de las pantallas con sesión iniciada: encabezado con botones,
- * pestañas y una pestaña de notificaciones siempre al final.
- */
 public abstract class SessionPanel extends JPanel {
     public static final String TAB_NOTIFICATIONS = "Notificaciones";
 
@@ -30,11 +26,9 @@ public abstract class SessionPanel extends JPanel {
 
     private void initHeader(MainFrame frame, String headerText) {
         add(ViewUtils.createLabel(headerText), Cell.at(0, 0).growX().insets(10, 20, 5, 5).build());
-
         headerButtons = ViewUtils.createPanel(ViewUtils.BACKGROUND);
         headerButtons.setOpaque(false);
         add(headerButtons, Cell.at(0, 1).east().insets(10, 5, 5, 20).build());
-
         JButton logoutButton = ViewUtils.createButton("Cerrar sesión");
         logoutButton.addActionListener(e -> frame.showLogin());
         headerButtonList.add(logoutButton);
@@ -44,7 +38,6 @@ public abstract class SessionPanel extends JPanel {
     private void initTabs() {
         tabs = new JTabbedPane();
         add(tabs, Cell.at(1, 0).span(2).grow().insets(5, 20, 20, 20).build());
-
         notificationsPanel = new NotificationsPanel();
         tabs.addTab(TAB_NOTIFICATIONS, notificationsPanel);
     }
@@ -58,13 +51,11 @@ public abstract class SessionPanel extends JPanel {
         headerButtons.repaint();
     }
 
-    /** Agrega un botón en el encabezado, a la izquierda de los ya existentes. */
     protected void addHeaderButton(JButton button) {
         headerButtonList.add(0, button);
         rebuildHeaderButtons();
     }
 
-    /** Agrega una pestaña antes de la de notificaciones, que siempre queda al final. */
     protected void addTab(String title, JComponent content) {
         tabs.insertTab(title, null, content, null, tabs.getTabCount() - 1);
     }

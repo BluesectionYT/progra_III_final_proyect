@@ -10,15 +10,13 @@ public class JSONReader {
         this.gsonInstance = new GsonBuilder().create();
     }
 
-    public String messageToJson(String category ,String message){
+    public String messageToJson(MessageCategory category ,String message){
         Message temporalMessage = new Message(category, message);
         String result =  gsonInstance.toJson(temporalMessage);
         return result;
     }
 
-    public String[] jsonToMessage(String jsonMessage){
-        Message temporalMessage = gsonInstance.fromJson(jsonMessage, Message.class);
-        String[] result = new String[] {temporalMessage.getCategory(), temporalMessage.getText()};
-        return result;
+    public Message jsonToMessage(String jsonMessage){
+        return gsonInstance.fromJson(jsonMessage, Message.class);
     }
 }

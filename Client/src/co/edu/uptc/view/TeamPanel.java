@@ -34,10 +34,8 @@ public class TeamPanel extends JPanel {
 
     private void initInviteRow() {
         add(ViewUtils.createLabel("Invitar:"), Cell.at(1, 0).build());
-
         inviteCombo = ViewUtils.createComboBox();
         add(inviteCombo, Cell.at(1, 1).growX().build());
-
         inviteButton = ViewUtils.createPrimaryButton("Enviar invitación");
         inviteButton.addActionListener(e -> inviteSelectedUser());
         add(inviteButton, Cell.at(1, 2).build());
@@ -46,10 +44,8 @@ public class TeamPanel extends JPanel {
     private void initManagementRow() {
         removeButton = ViewUtils.createButton("Eliminar integrante");
         removeButton.addActionListener(e -> removeSelectedMember());
-
         transferButton = ViewUtils.createButton("Transferir administración");
         transferButton.addActionListener(e -> transferToSelectedMember());
-
         closeProjectButton = ViewUtils.createButton("Cerrar proyecto");
         closeProjectButton.addActionListener(e -> closeProject());
 
