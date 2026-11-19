@@ -1,10 +1,10 @@
 package co.edu.uptc.net;
 
 public class Message {
-    private String category;
+    private MessageCategory category;
     private String text;
 
-    public Message(String category, String text) {
+    public Message(MessageCategory category, String text) {
         this.category = category;
         this.text = text;
     }
@@ -17,7 +17,7 @@ public class Message {
         this.text = text;
     }
 
-    public String getCategory() {
+    public MessageCategory getCategory() {
         return category;
     }
 }

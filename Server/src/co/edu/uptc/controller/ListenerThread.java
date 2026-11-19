@@ -19,9 +19,9 @@ public class ListenerThread extends Thread{
         while (connected) {
             try {
                 String line = input.readUTF();
-                String[] data = line.split(",");
-                clientThread.processData(data);
+                clientThread.processData(line);
             } catch (IOException e) {
+                clientThread.closeConnection();
                 connected = false;
             }
         }

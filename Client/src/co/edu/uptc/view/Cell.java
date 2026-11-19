@@ -3,10 +3,6 @@ package co.edu.uptc.view;
 import java.awt.GridBagConstraints;
 import java.awt.Insets;
 
-/**
- * Constructor fluido de GridBagConstraints.
- * Uso: panel.add(componente, Cell.at(fila, columna).span(2).growX().build());
- */
 public final class Cell {
     private static final int DEFAULT_GAP = 5;
 

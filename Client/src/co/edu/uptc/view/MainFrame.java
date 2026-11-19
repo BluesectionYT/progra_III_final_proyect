@@ -2,8 +2,7 @@ package co.edu.uptc.view;
 
 import java.awt.Dimension;
 
-import javax.swing.JFrame;
-import javax.swing.JPanel;
+import javax.swing.*;
 
 import co.edu.uptc.controller.Controller;
 
@@ -27,7 +26,6 @@ public class MainFrame extends JFrame {
         showPanel(loginPanel);
     }
 
-    /** Pantalla de un usuario sin proyecto: crear uno o aceptar una invitación. */
     public void showProject() {
         showPanel(new ProjectPanel(this, getUser()));
     }
@@ -50,7 +48,6 @@ public class MainFrame extends JFrame {
         repaint();
     }
 
-    /** Agrega una notificación a la pantalla actual, si es una pantalla con sesión. */
     public void addNotification(String message) {
         if (getContentPane() instanceof SessionPanel) {
             ((SessionPanel) getContentPane()).addNotification(message);
@@ -67,5 +64,9 @@ public class MainFrame extends JFrame {
 
     public void showError() {
         loginPanel.showError();
+    }
+
+    public void showGeneralError(String message) {
+        JOptionPane.showMessageDialog(this, message, "Error", JOptionPane.ERROR_MESSAGE);
     }
 }

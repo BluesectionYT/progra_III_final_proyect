@@ -1,9 +1,9 @@
 package co.edu.uptc.controller;
 
 import co.edu.uptc.interfaces.IProjectManager;
-import co.edu.uptc.model.Project;
-import co.edu.uptc.model.ProjectManager;
 import co.edu.uptc.net.JSONReader;
+import co.edu.uptc.net.Message;
+import co.edu.uptc.net.MessageCategory;
 import co.edu.uptc.net.Observer;
 
 import java.io.DataOutputStream;
@@ -37,7 +37,7 @@ public class ClientThread extends Thread implements Observer {
         }
     }
 
-    public void sendMessage(String category, String data) {
+    public void sendMessage(MessageCategory category, String data) {
         String message = jsonReader.messageToJson(category, data);
         if (message != null) {
             try {
@@ -48,17 +48,111 @@ public class ClientThread extends Thread implements Observer {
         }
     }
 
-    public void processData(String[] data) {
-        String line = jsonReader.jsonToMessage(data);
-        String result = "0";
-        long[] numbers = new long[]{};
-        try {
+    public void processData(String data) {
+        Message message = jsonReader.jsonToMessage(data);
+        sessionCommands(message.getCategory());
+        workCircleCommands(message.getCategory());
+        projectCommands(message.getCategory());
+        historyCommands(message.getCategory());
+        requestsCommands(message.getCategory());
+        approveCommands(message.getCategory());
+        teamCommands(message.getCategory());
+        remainingCommands(message.getCategory());
+    }
 
-        } catch (NumberFormatException e) {
+    private void sessionCommands(MessageCategory category) {
+        if (category == MessageCategory.REGISTER || category == MessageCategory.LOGIN || category == MessageCategory.LOGOUT) {
+            switch (category) {
+                case REGISTER:
+                    break;
+                case LOGIN:
+                    break;
+                case LOGOUT:
+                    break;
+            }
         }
     }
 
-    private void closeConnection() {
+    private void workCircleCommands(MessageCategory category) {
+        switch (category) {
+            case GET_CIRCLE:
+                break;
+            case ADD_TO_CIRCLE:
+                break;
+            case GET_INVITATIONS:
+                break;
+            case ACCEPT_INVITATION:
+                break;
+            case REJECT_INVITATION:
+                break;
+        }
+    }
+
+    private void projectCommands(MessageCategory category) {
+        switch (category) {
+            case CREATE_PROJECT:
+                break;
+            case GET_PROJECT_INFO:
+                break;
+        }
+    }
+
+    private void historyCommands(MessageCategory category) {
+        switch (category) {
+            case GET_SUMMARY:
+                break;
+            case GET_HISTORY:
+                break;
+        }
+    }
+
+    private void requestsCommands(MessageCategory category) {
+        switch (category) {
+            case CREATE_REQUEST:
+                break;
+            case GET_MY_REQUESTS:
+                break;
+        }
+    }
+
+    private void approveCommands(MessageCategory category) {
+        switch (category) {
+            case GET_PENDING:
+                break;
+            case APPROVE_REQUEST:
+                break;
+            case REJECT_REQUEST:
+                break;
+        }
+    }
+
+    private void teamCommands(MessageCategory category) {
+        switch (category) {
+            case GET_TEAM:
+                break;
+            case INVITE_MEMBER:
+                break;
+            case REMOVE_MEMBER:
+                break;
+            case TRANSFER_ADMIN:
+                break;
+            case CLOSE_PROJECT:
+                break;
+        }
+    }
+
+    private void remainingCommands(MessageCategory category) {
+        switch (category) {
+            case LEAVE_PROJECT:
+                break;
+            case NOTIFY:
+                break;
+            case EXIT:
+                break;
+        }
+    }
+
+    public void closeConnection() {
         try {
             controller.detach(this);
             socket.close();
@@ -69,7 +163,7 @@ public class ClientThread extends Thread implements Observer {
     }
 
     @Override
-    public void update(String category, String data) {
+    public void update(MessageCategory category, String data) {
         sendMessage(category, data);
     }
 }
