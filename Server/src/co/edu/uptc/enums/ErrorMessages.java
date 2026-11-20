@@ -76,6 +76,9 @@ public enum ErrorMessages {
     CATEGORY_DATA_REQUIRED("Cada categoría necesita un nombre y un monto mayor que cero"),
     CATEGORY_REPEATED("La categoría «%s» está repetida"),
     CATEGORIES_EXCEED_BUDGET("La suma de las categorías supera el presupuesto total");
+    NOTICE_REMOVED_FROM_PROJECT("Fuiste retirado del proyecto \"%s\""),
+    NOTICE_PROJECT_CLOSED("El proyecto \"%s\" fue cerrado por su administrador"),
+    NOTICE_INVITATION_CANCELLED("La invitación al proyecto \"%s\" fue cancelada porque el proyecto se cerró"),
 
     private final String text;
 

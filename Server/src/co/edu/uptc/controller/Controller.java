@@ -17,13 +17,15 @@ import java.io.IOException;
 import java.net.ServerSocket;
 import java.net.Socket;
 import java.util.ArrayList;
+import java.util.List;
+import java.util.concurrent.CopyOnWriteArrayList;
 
 public class Controller implements Subject {
     private static final int PORT = 10087;
     private static final String DATA_PATH = "data/data.json";
     private ServerSocket serverSocket;
     private IProjectManager projectManager;
-    private ArrayList<Observer> observers;
+    private List<Observer> observers;
     private IPersistence persistence;
     private StateMapper stateMapper;
     private IPasswordHasher hasher;
@@ -39,6 +41,7 @@ public class Controller implements Subject {
         this.stateMapper = new StateMapper();
         this.hasher = new PasswordHasher();
         this.projectManager = new ProjectManager();
+        this.observers = new CopyOnWriteArrayList<>();
         loadData();
         registerShutdownHook();
     }

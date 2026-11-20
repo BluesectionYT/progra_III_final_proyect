@@ -512,7 +512,9 @@ public class ClientThread extends Thread implements Observer {
             BodyReader body = BodyReader.parse(message.getText());
             String username = body.readField("username");
             checkPassword(body.readField("password"));
-            project.removeMember(findUserOrFail(username));
+            User removed = findUserOrFail(username);
+            project.removeMember(removed);
+            notifyRemoved(removed, project);
             return ResponseBuilder.teamData(project, user);
         });
     }
@@ -533,9 +535,32 @@ public class ClientThread extends Thread implements Observer {
             Project project = requireAdminProject();
             BodyReader body = BodyReader.parse(message.getText());
             checkPassword(body.readField("password"));
-            projectManager.closeProject(project);
+            String projectName = project.getName();
+            ArrayList<User> invitees = projectManager.findPendingInvitees(project);
+            ArrayList<User> members = projectManager.closeProject(project);
+            members.remove(user);
+            notifyClosed(projectName, members, invitees);
             return null;
         });
+    }
+
+    private void notifyRemoved(User removed, Project project) {
+        String text = ErrorMessages.NOTICE_REMOVED_FROM_PROJECT.format(project.getName());
+        controller.notifyUser(removed.getUsername(), MessageCategory.NOTIFY,
+                ResponseBuilder.notification(ResponseBuilder.NOTIFY_REMOVED, text));
+    }
+
+    private void notifyClosed(String projectName, ArrayList<User> members, ArrayList<User> invitees) {
+        String memberText = ErrorMessages.NOTICE_PROJECT_CLOSED.format(projectName);
+        for (User member : members) {
+            controller.notifyUser(member.getUsername(), MessageCategory.NOTIFY,
+                    ResponseBuilder.notification(ResponseBuilder.NOTIFY_PROJECT_CLOSED, memberText));
+        }
+        String inviteeText = ErrorMessages.NOTICE_INVITATION_CANCELLED.format(projectName);
+        for (User invitee : invitees) {
+            controller.notifyUser(invitee.getUsername(), MessageCategory.NOTIFY,
+                    ResponseBuilder.notification(ResponseBuilder.NOTIFY_INVITATION_CANCELLED, inviteeText));
+        }
     }
 
     private void leaveProject() {
