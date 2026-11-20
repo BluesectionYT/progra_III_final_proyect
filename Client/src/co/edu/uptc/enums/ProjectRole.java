@@ -1,4 +1,4 @@
-package co.edu.uptc.view;
+package co.edu.uptc.enums;
 
 public enum ProjectRole {
     ADMIN("Administrador"),

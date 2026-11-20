@@ -2,7 +2,7 @@ package co.edu.uptc.persistence;
 
 import co.edu.uptc.model.ExpenseRequest;
 import co.edu.uptc.model.Project;
-import co.edu.uptc.model.RequestStatus;
+import co.edu.uptc.enums.RequestStatus;
 
 import java.lang.reflect.Field;
 import java.time.LocalDateTime;

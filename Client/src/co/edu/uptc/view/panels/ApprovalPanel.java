@@ -1,4 +1,4 @@
-package co.edu.uptc.view;
+package co.edu.uptc.view.panels;
 
 import java.awt.Color;
 import java.awt.GridBagLayout;
@@ -12,6 +12,8 @@ import javax.swing.JTextField;
 import javax.swing.table.DefaultTableModel;
 
 import co.edu.uptc.interfaces.IController;
+import co.edu.uptc.view.utills.Cell;
+import co.edu.uptc.view.utills.ViewUtils;
 
 public class ApprovalPanel extends JPanel {
     private static final String NO_ERROR = " ";

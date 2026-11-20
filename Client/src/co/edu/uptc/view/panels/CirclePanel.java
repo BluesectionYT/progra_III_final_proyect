@@ -1,4 +1,4 @@
-package co.edu.uptc.view;
+package co.edu.uptc.view.panels;
 
 import java.awt.GridBagLayout;
 import java.util.List;
@@ -9,6 +9,8 @@ import javax.swing.JPanel;
 import javax.swing.JTextField;
 
 import co.edu.uptc.interfaces.IController;
+import co.edu.uptc.view.utills.Cell;
+import co.edu.uptc.view.utills.ViewUtils;
 
 public class CirclePanel extends JPanel {
     private IController controller;

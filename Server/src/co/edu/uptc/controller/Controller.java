@@ -6,12 +6,11 @@ import co.edu.uptc.model.ProjectManager;
 import co.edu.uptc.net.*;
 import co.edu.uptc.model.User;
 import co.edu.uptc.net.Message;
-import co.edu.uptc.net.MessageCategory;
-import co.edu.uptc.net.Observer;
-import co.edu.uptc.net.Subject;
+import co.edu.uptc.enums.MessageCategory;
+import co.edu.uptc.interfaces.Observer;
+import co.edu.uptc.interfaces.Subject;
 import co.edu.uptc.persistence.PersistenceJSON;
 import co.edu.uptc.persistence.StateMapper;
-import co.edu.uptc.persistence.StateSnapshot;
 
 import java.io.IOException;
 import java.net.ServerSocket;
@@ -35,6 +34,7 @@ public class Controller implements Subject {
             this.projectManager = new ProjectManager();
             StateMapper mapper = new StateMapper();
             mapper.restore(persistence.readState("data/data.json"), projectManager);
+            Runtime.getRuntime().addShutdownHook(new Thread(this::saveData));
         } catch (IOException e) {
             throw new RuntimeException(e);
         }
@@ -70,9 +70,11 @@ public class Controller implements Subject {
         return hasher;
     }
 
-    public void saveData(){
+    public void saveData() {
         StateMapper stateMapper = new StateMapper();
         persistence.saveState("data/data.json", stateMapper.toSnapshot(this.projectManager));
+    }
+
     public boolean isLoggedIn(String username) {
         for (Observer obs : observers) {
             if (obs instanceof ClientThread) {

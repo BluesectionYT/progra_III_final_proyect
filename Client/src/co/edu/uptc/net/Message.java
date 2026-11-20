@@ -1,5 +1,7 @@
 package co.edu.uptc.net;
 
+import co.edu.uptc.enums.MessageCategory;
+
 public class Message {
     private MessageCategory category;
     private String text;

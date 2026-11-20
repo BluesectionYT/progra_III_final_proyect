@@ -1,4 +1,6 @@
-package co.edu.uptc.net;
+package co.edu.uptc.interfaces;
+
+import co.edu.uptc.net.Message;
 
 public interface Subject {
     public void attach(Observer observer);

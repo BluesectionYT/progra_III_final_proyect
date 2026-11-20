@@ -1,4 +1,7 @@
-package co.edu.uptc.view;
+package co.edu.uptc.view.panels;
+
+import co.edu.uptc.view.utills.Cell;
+import co.edu.uptc.view.utills.ViewUtils;
 
 import java.awt.GridBagLayout;
 import java.util.List;

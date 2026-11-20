@@ -1,4 +1,4 @@
-package co.edu.uptc.view;
+package co.edu.uptc.view.panels;
 
 import java.awt.Color;
 import java.util.HashSet;
@@ -11,6 +11,9 @@ import javax.swing.JPanel;
 import javax.swing.JTextField;
 
 import co.edu.uptc.interfaces.IController;
+import co.edu.uptc.view.utills.Cell;
+import co.edu.uptc.view.utills.ViewUtils;
+import co.edu.uptc.view.frames.MainFrame;
 
 public class ProjectPanel extends SessionPanel {
     private IController controller;

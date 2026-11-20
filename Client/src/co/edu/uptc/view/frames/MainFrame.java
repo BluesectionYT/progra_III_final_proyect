@@ -1,4 +1,4 @@
-package co.edu.uptc.view;
+package co.edu.uptc.view.frames;
 
 import java.awt.Dimension;
 import java.awt.event.WindowAdapter;
@@ -7,7 +7,9 @@ import java.util.List;
 
 import javax.swing.*;
 
+import co.edu.uptc.enums.ProjectRole;
 import co.edu.uptc.interfaces.IController;
+import co.edu.uptc.view.panels.*;
 
 public class MainFrame extends JFrame {
     private IController controller;

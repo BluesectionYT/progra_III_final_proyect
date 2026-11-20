@@ -5,6 +5,9 @@ import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.HashMap;
 
+import co.edu.uptc.enums.RequestStatus;
+import co.edu.uptc.enums.Role;
+import co.edu.uptc.enums.SortCriteria;
 import co.edu.uptc.structures.BinaryTree;
 import co.edu.uptc.structures.Queue;
 
