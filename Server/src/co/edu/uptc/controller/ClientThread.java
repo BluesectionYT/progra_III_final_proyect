@@ -51,10 +51,6 @@ public class ClientThread extends Thread implements Observer {
         }
     }
 
-    // ------------------------------------------------------------------
-    // Despacho de comandos (cada grupo es un switch sobre MessageCategory)
-    // ------------------------------------------------------------------
-
     public void processData(String data) {
         Message message = jsonReader.jsonToMessage(data);
         synchronized (projectManager) {
@@ -183,15 +179,6 @@ public class ClientThread extends Thread implements Observer {
         }
     }
 
-    // ------------------------------------------------------------------
-    // Manejo de errores centralizado
-    // ------------------------------------------------------------------
-
-    /**
-     * Ejecuta la acción de un comando y responde por ti: si termina bien envía ok=true con lo que
-     * devuelva la acción; si lanza una excepción de validación envía ok=false con su mensaje.
-     * Así ningún comando repite el try/catch.
-     */
     private void execute(MessageCategory category, Supplier<Object> action) {
         try {
             sendResponse(true, null, category, action.get());
@@ -202,9 +189,6 @@ public class ClientThread extends Thread implements Observer {
         }
     }
 
-    // ------------------------------------------------------------------
-    // Sesión
-    // ------------------------------------------------------------------
 
     private void register(Message message) {
         execute(MessageCategory.REGISTER, () -> {
@@ -256,10 +240,6 @@ public class ClientThread extends Thread implements Observer {
             return null;
         });
     }
-
-    // ------------------------------------------------------------------
-    // Validaciones comunes (lanzan excepción; execute() la convierte en respuesta de error)
-    // ------------------------------------------------------------------
 
     private void requireLogin() {
         if (user == null) {
@@ -323,9 +303,6 @@ public class ClientThread extends Thread implements Observer {
         return category;
     }
 
-    // ------------------------------------------------------------------
-    // Círculo de trabajo e invitaciones
-    // ------------------------------------------------------------------
 
     private void getCircle() {
         execute(MessageCategory.GET_CIRCLE, () -> {
@@ -369,9 +346,6 @@ public class ClientThread extends Thread implements Observer {
         });
     }
 
-    // ------------------------------------------------------------------
-    // Proyecto
-    // ------------------------------------------------------------------
 
     private void createProject(Message message) {
         execute(MessageCategory.CREATE_PROJECT, () -> {
@@ -413,9 +387,6 @@ public class ClientThread extends Thread implements Observer {
         execute(MessageCategory.GET_PROJECT_INFO, () -> ResponseBuilder.projectInfo(requireProject(), user));
     }
 
-    // ------------------------------------------------------------------
-    // Resumen e historial
-    // ------------------------------------------------------------------
 
     private void getSummary() {
         execute(MessageCategory.GET_SUMMARY, () -> ResponseBuilder.summary(requireProject()));
@@ -443,9 +414,6 @@ public class ClientThread extends Thread implements Observer {
         return BodyReader.isBlank(categoryName) ? null : requireCategory(project, categoryName);
     }
 
-    // ------------------------------------------------------------------
-    // Solicitudes de gasto
-    // ------------------------------------------------------------------
 
     private void getMyRequests() {
         execute(MessageCategory.GET_MY_REQUESTS, () -> {
@@ -525,10 +493,6 @@ public class ClientThread extends Thread implements Observer {
         }
     }
 
-    // ------------------------------------------------------------------
-    // Equipo
-    // ------------------------------------------------------------------
-
     private void getTeam() {
         execute(MessageCategory.GET_TEAM, () -> ResponseBuilder.teamData(requireAdminProject(), user));
     }
@@ -582,9 +546,6 @@ public class ClientThread extends Thread implements Observer {
         });
     }
 
-    // ------------------------------------------------------------------
-    // Conexión
-    // ------------------------------------------------------------------
 
     private void exit() {
         controller.saveData();
