@@ -1,14 +1,13 @@
 package co.edu.uptc.view.panels;
 
-import co.edu.uptc.view.utills.Cell;
-import co.edu.uptc.view.utills.ViewUtils;
-
-import java.awt.GridBagLayout;
+import java.awt.Color;
 import java.util.List;
 
 import javax.swing.JLabel;
 import javax.swing.JPanel;
 import javax.swing.table.DefaultTableModel;
+
+import co.edu.uptc.view.utills.ViewUtils;
 
 public class SummaryPanel extends JPanel {
     private JLabel balanceLabel;
@@ -17,8 +16,8 @@ public class SummaryPanel extends JPanel {
     private DefaultTableModel memberModel;
 
     public SummaryPanel() {
-        super(new GridBagLayout());
-        ViewUtils.styleAsTab(this);
+        setLayout(null);
+        setBackground(Color.WHITE);
         initComponents();
     }
 
@@ -30,16 +29,24 @@ public class SummaryPanel extends JPanel {
     private void initTotals() {
         balanceLabel = new JLabel("Saldo disponible: ");
         balanceLabel.setFont(ViewUtils.HIGHLIGHT_FONT);
-        add(balanceLabel, Cell.at(0, 0).span(2).build());
+        balanceLabel.setBounds(20, 15, 600, 35);
+        add(balanceLabel);
+
         spentLabel = new JLabel("Total gastado: ");
-        add(spentLabel, Cell.at(1, 0).span(2).build());
+        spentLabel.setBounds(20, 52, 600, 25);
+        add(spentLabel);
     }
 
     private void initTables() {
         categoryModel = ViewUtils.createTableModel("Categoría", "Presupuesto", "Gastado", "Uso");
-        add(ViewUtils.createTablePanel("Consumo por categoría", categoryModel), Cell.at(2, 0).grow().build());
+        JPanel categoryPanel = ViewUtils.createTitledPanel("Consumo por categoría", 15, 90, 400, 640);
+        categoryPanel.add(ViewUtils.createTableScroll(categoryModel, 10, 25, 380, 600));
+        add(categoryPanel);
+
         memberModel = ViewUtils.createTableModel("Integrante", "Gasto acumulado");
-        add(ViewUtils.createTablePanel("Gasto por integrante", memberModel), Cell.at(2, 1).grow().build());
+        JPanel memberPanel = ViewUtils.createTitledPanel("Gasto por integrante", 430, 90, 400, 640);
+        memberPanel.add(ViewUtils.createTableScroll(memberModel, 10, 25, 380, 600));
+        add(memberPanel);
     }
 
     public void setBalance(String balance) {

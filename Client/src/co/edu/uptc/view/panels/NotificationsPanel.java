@@ -1,15 +1,14 @@
 package co.edu.uptc.view.panels;
 
-import co.edu.uptc.view.utills.Cell;
-import co.edu.uptc.view.utills.ViewUtils;
-
-import java.awt.GridBagLayout;
+import java.awt.Color;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 
 import javax.swing.JButton;
 import javax.swing.JPanel;
 import javax.swing.table.DefaultTableModel;
+
+import co.edu.uptc.view.utills.ViewUtils;
 
 public class NotificationsPanel extends JPanel {
     private static final DateTimeFormatter TIME_FORMAT = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm");
@@ -18,18 +17,20 @@ public class NotificationsPanel extends JPanel {
     private JButton clearButton;
 
     public NotificationsPanel() {
-        super(new GridBagLayout());
-        ViewUtils.styleAsTab(this);
+        setLayout(null);
+        setBackground(Color.WHITE);
         initComponents();
     }
 
     private void initComponents() {
         notificationsModel = ViewUtils.createTableModel("Fecha", "Mensaje");
-        add(ViewUtils.createTablePanel("Notificaciones", notificationsModel, 140, 700), Cell.at(0, 0).grow().build());
+        JPanel tablePanel = ViewUtils.createTitledPanel("Notificaciones", 15, 15, 815, 660);
+        tablePanel.add(ViewUtils.createTableScroll(notificationsModel, 10, 25, 795, 620, 140, 700));
+        add(tablePanel);
 
-        clearButton = ViewUtils.createButton("Limpiar");
+        clearButton = ViewUtils.createButton("Limpiar", 730, 690, 100, 28);
         clearButton.addActionListener(e -> notificationsModel.setRowCount(0));
-        add(ViewUtils.createButtonBar(clearButton), Cell.at(1, 0).growX().build());
+        add(clearButton);
     }
 
     public void addNotification(String message) {

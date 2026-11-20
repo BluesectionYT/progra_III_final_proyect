@@ -1,6 +1,5 @@
 package co.edu.uptc.view.frames;
 
-import java.awt.Dimension;
 import java.awt.event.WindowAdapter;
 import java.awt.event.WindowEvent;
 import java.util.List;
@@ -10,16 +9,18 @@ import javax.swing.*;
 import co.edu.uptc.enums.ProjectRole;
 import co.edu.uptc.interfaces.IController;
 import co.edu.uptc.view.panels.*;
+import co.edu.uptc.view.utills.ViewUtils;
 
 public class MainFrame extends JFrame {
     private IController controller;
     private LoginPanel loginPanel;
+    private RegisterPanel registerPanel;
 
     public MainFrame(IController controller) {
         this.controller = controller;
         setTitle("Gestión de Presupuesto");
         setSize(900, 900);
-        setMinimumSize(new Dimension(800, 700));
+        setResizable(false);
         setDefaultCloseOperation(DISPOSE_ON_CLOSE);
         addWindowListener(new WindowAdapter() {
             @Override
@@ -34,7 +35,7 @@ public class MainFrame extends JFrame {
     }
 
     public void showLogin() {
-        loginPanel = new LoginPanel(controller);
+        loginPanel = new LoginPanel(this ,controller);
         showPanel(loginPanel);
     }
 
@@ -188,10 +189,23 @@ public class MainFrame extends JFrame {
     }
 
     public void showError(String message) {
-        loginPanel.showError(message);
+        if (getContentPane() instanceof RegisterPanel) {
+            registerPanel.showError(message);
+        } else {
+            loginPanel.showError(message);
+        }
     }
-
     public void showGeneralError(String message) {
         JOptionPane.showMessageDialog(this, message, "Error", JOptionPane.ERROR_MESSAGE);
+    }
+
+    public void showRegister() {
+        registerPanel = new RegisterPanel(this, controller);
+        showPanel(registerPanel);
+    }
+
+    public void accountCreated() {
+        showLogin();
+        ViewUtils.showMessage(this, "Cuenta creada. Ya puedes ingresar.");
     }
 }

@@ -1,6 +1,6 @@
 package co.edu.uptc.view.panels;
 
-import java.awt.GridBagLayout;
+import java.awt.Color;
 import java.util.List;
 
 import javax.swing.JButton;
@@ -9,7 +9,6 @@ import javax.swing.JPanel;
 import javax.swing.JTextField;
 
 import co.edu.uptc.interfaces.IController;
-import co.edu.uptc.view.utills.Cell;
 import co.edu.uptc.view.utills.ViewUtils;
 
 public class CirclePanel extends JPanel {
@@ -22,39 +21,41 @@ public class CirclePanel extends JPanel {
     private JButton acceptButton;
 
     public CirclePanel(IController controller, boolean showInvitations) {
-        super(new GridBagLayout());
+        setLayout(null);
         this.controller = controller;
-        ViewUtils.styleAsTab(this);
+        setBackground(Color.WHITE);
         initComponents(showInvitations);
     }
 
     private void initComponents(boolean showInvitations) {
-        add(createCirclePanel(), Cell.at(0, 0).grow().build());
+        add(createCirclePanel(showInvitations ? 400 : 815));
         if (showInvitations) {
-            add(createInvitationsPanel(), Cell.at(0, 1).grow().build());
+            add(createInvitationsPanel());
         }
     }
 
-    private JPanel createCirclePanel() {
+    private JPanel createCirclePanel(int width) {
+        JPanel panel = ViewUtils.createTitledPanel("Mi círculo de trabajo", 15, 15, width, 700);
         circleList = new JList<>();
-        JPanel panel = ViewUtils.createListPanel("Mi círculo de trabajo", circleList, 2);
-        memberField = ViewUtils.createTextField();
-        memberField.setColumns(1);
-        panel.add(memberField, Cell.at(1, 0).growX().build());
-        addButton = ViewUtils.createPrimaryButton("Agregar");
+        panel.add(ViewUtils.createListScroll(circleList, 10, 25, width - 20, 620));
+        memberField = ViewUtils.createTextField(10, 655, width - 120);
+        panel.add(memberField);
+        addButton = ViewUtils.createPrimaryButton("Agregar", width - 100, 655, 90, 28);
         addButton.addActionListener(e -> addMember());
-        panel.add(addButton, Cell.at(1, 1).build());
+        panel.add(addButton);
         return panel;
     }
 
     private JPanel createInvitationsPanel() {
+        JPanel panel = ViewUtils.createTitledPanel("Invitaciones recibidas", 430, 15, 400, 700);
         invitationsList = new JList<>();
-        JPanel panel = ViewUtils.createListPanel("Invitaciones recibidas", invitationsList);
-        rejectButton = ViewUtils.createButton("Rechazar");
-        acceptButton = ViewUtils.createPrimaryButton("Aceptar");
+        panel.add(ViewUtils.createListScroll(invitationsList, 10, 25, 380, 620));
+        rejectButton = ViewUtils.createButton("Rechazar", 195, 655, 90, 28);
         rejectButton.addActionListener(e -> answerInvitation(false));
+        panel.add(rejectButton);
+        acceptButton = ViewUtils.createPrimaryButton("Aceptar", 295, 655, 90, 28);
         acceptButton.addActionListener(e -> answerInvitation(true));
-        panel.add(ViewUtils.createButtonBar(rejectButton, acceptButton), Cell.at(1, 0).growX().build());
+        panel.add(acceptButton);
         return panel;
     }
 

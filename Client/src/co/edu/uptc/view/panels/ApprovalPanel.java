@@ -1,7 +1,6 @@
 package co.edu.uptc.view.panels;
 
 import java.awt.Color;
-import java.awt.GridBagLayout;
 import java.util.List;
 
 import javax.swing.JButton;
@@ -12,7 +11,6 @@ import javax.swing.JTextField;
 import javax.swing.table.DefaultTableModel;
 
 import co.edu.uptc.interfaces.IController;
-import co.edu.uptc.view.utills.Cell;
 import co.edu.uptc.view.utills.ViewUtils;
 
 public class ApprovalPanel extends JPanel {
@@ -30,38 +28,36 @@ public class ApprovalPanel extends JPanel {
     private JButton approveButton;
 
     public ApprovalPanel(IController controller) {
-        super(new GridBagLayout());
+        setLayout(null);
         this.controller = controller;
-        ViewUtils.styleAsTab(this);
+        setBackground(Color.WHITE);
         initComponents();
     }
 
     private void initComponents() {
         infoLabel = new JLabel(BALANCE_TEXT);
-        add(infoLabel, Cell.at(0, 0).growX().build());
+        infoLabel.setBounds(15, 15, 800, 25);
+        add(infoLabel);
+
         pendingModel = ViewUtils.createTableModel("#", "Fecha", "Integrante", "Concepto", "Categoría", "Monto");
         pendingTable = ViewUtils.createTable(pendingModel);
-        add(ViewUtils.createScroll(pendingTable), Cell.at(1, 0).grow().build());
-        add(createReasonRow(), Cell.at(2, 0).growX().build());
-        add(createActionBar(), Cell.at(3, 0).growX().build());
-    }
+        add(ViewUtils.createScroll(pendingTable, 15, 50, 815, 560));
 
-    private JPanel createReasonRow() {
-        JPanel row = ViewUtils.createPanel(Color.WHITE);
-        reasonField = ViewUtils.createTextField();
-        ViewUtils.addFormRow(row, 0, "Motivo", reasonField);
+        add(ViewUtils.createLabel("Motivo", 15, 620, 60));
+        reasonField = ViewUtils.createTextField(80, 620, 500);
+        add(reasonField);
         reasonErrorLabel = new JLabel(NO_ERROR);
         reasonErrorLabel.setForeground(ViewUtils.ERROR);
-        row.add(reasonErrorLabel, Cell.at(1, 1).build());
-        return row;
-    }
+        reasonErrorLabel.setBounds(80, 650, 500, 22);
+        add(reasonErrorLabel);
 
-    private JPanel createActionBar() {
-        rejectButton = ViewUtils.createButton("Rechazar");
+        rejectButton = ViewUtils.createButton("Rechazar", 605, 690, 105, 30);
         rejectButton.addActionListener(e -> decide(false));
-        approveButton = ViewUtils.createPrimaryButton("Aprobar");
+        add(rejectButton);
+
+        approveButton = ViewUtils.createPrimaryButton("Aprobar", 720, 690, 110, 30);
         approveButton.addActionListener(e -> decide(true));
-        return ViewUtils.createButtonBar(rejectButton, approveButton);
+        add(approveButton);
     }
 
     private void decide(boolean approve) {

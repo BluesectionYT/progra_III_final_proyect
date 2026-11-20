@@ -1,6 +1,6 @@
 package co.edu.uptc.view.panels;
 
-import java.awt.GridBagLayout;
+import java.awt.Color;
 import java.util.List;
 
 import javax.swing.JButton;
@@ -10,7 +10,6 @@ import javax.swing.JTextField;
 import javax.swing.table.DefaultTableModel;
 
 import co.edu.uptc.interfaces.IController;
-import co.edu.uptc.view.utills.Cell;
 import co.edu.uptc.view.utills.ViewUtils;
 
 public class HistoryPanel extends JPanel {
@@ -26,41 +25,43 @@ public class HistoryPanel extends JPanel {
     private DefaultTableModel historyModel;
 
     public HistoryPanel(IController controller) {
-        super(new GridBagLayout());
+        setLayout(null);
         this.controller = controller;
-        ViewUtils.styleAsTab(this);
+        setBackground(Color.WHITE);
         initComponents();
     }
 
     private void initComponents() {
-        add(createFiltersPanel(), Cell.at(0, 0).growX().build());
-        historyModel = ViewUtils.createTableModel("#", "Fecha", "Integrante", "Concepto", "Categoría", "Monto", "Estado", "Motivo");
-        add(ViewUtils.createTablePanel("Historial de gastos", historyModel), Cell.at(1, 0).grow().build());
-    }
+        add(ViewUtils.createLabel("Categoría", 15, 15, 70));
+        categoryCombo = ViewUtils.createComboBox(90, 15, 130, "Todas");
+        add(categoryCombo);
 
-    private JPanel createFiltersPanel() {
-        JPanel panel = ViewUtils.createTitledPanel("Filtros y orden");
-        categoryCombo = ViewUtils.createComboBox("Todas");
-        ViewUtils.addLabeledField(panel, 0, 0, "Categoría", categoryCombo);
-        statusCombo = ViewUtils.createComboBox("Todos", "Pendiente", "Aprobada", "Rechazada");
-        ViewUtils.addLabeledField(panel, 0, 2, "Estado", statusCombo);
-        orderCombo = ViewUtils.createComboBox("Monto (mayor a menor)", "Fecha de registro", "Fecha de aprobación", "Integrante solicitante");
-        ViewUtils.addLabeledField(panel, 0, 4, "Ordenar por", orderCombo);
-        fromField = createDateField();
-        ViewUtils.addLabeledField(panel, 1, 0, "Desde", fromField);
-        toField = createDateField();
-        ViewUtils.addLabeledField(panel, 1, 2, "Hasta", toField);
-        applyButton = ViewUtils.createPrimaryButton("Aplicar");
+        add(ViewUtils.createLabel("Estado", 235, 15, 50));
+        statusCombo = ViewUtils.createComboBox(290, 15, 130, "Todos", "Pendiente", "Aprobada", "Rechazada");
+        add(statusCombo);
+
+        add(ViewUtils.createLabel("Desde", 435, 15, 45));
+        fromField = ViewUtils.createTextField(485, 15, 110);
+        fromField.setToolTipText(DATE_HINT);
+        add(fromField);
+
+        add(ViewUtils.createLabel("Hasta", 610, 15, 45));
+        toField = ViewUtils.createTextField(660, 15, 110);
+        toField.setToolTipText(DATE_HINT);
+        add(toField);
+
+        add(ViewUtils.createLabel("Ordenar por", 15, 55, 80));
+        orderCombo = ViewUtils.createComboBox(100, 55, 230, "Monto (mayor a menor)", "Fecha de registro",
+                "Fecha de aprobación", "Integrante solicitante");
+        add(orderCombo);
+
+        applyButton = ViewUtils.createPrimaryButton("Aplicar", 345, 55, 100, 28);
         applyButton.addActionListener(e -> applyFilters());
-        panel.add(applyButton, Cell.at(1, 4).span(2).east().build());
-        return panel;
-    }
+        add(applyButton);
 
-    private JTextField createDateField() {
-        JTextField field = ViewUtils.createTextField();
-        field.setColumns(1);
-        field.setToolTipText(DATE_HINT);
-        return field;
+        historyModel = ViewUtils.createTableModel("#", "Fecha", "Integrante", "Concepto", "Categoría", "Monto", "Estado",
+                "Motivo");
+        add(ViewUtils.createTableScroll(historyModel, 15, 100, 815, 620));
     }
 
     private void applyFilters() {

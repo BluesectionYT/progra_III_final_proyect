@@ -11,9 +11,8 @@ import javax.swing.JPanel;
 import javax.swing.JTextField;
 
 import co.edu.uptc.interfaces.IController;
-import co.edu.uptc.view.utills.Cell;
-import co.edu.uptc.view.utills.ViewUtils;
 import co.edu.uptc.view.frames.MainFrame;
+import co.edu.uptc.view.utills.ViewUtils;
 
 public class ProjectPanel extends SessionPanel {
     private IController controller;
@@ -24,7 +23,7 @@ public class ProjectPanel extends SessionPanel {
     private JTextField categoriesField;
     private Map<String, Double> categories;
 
-    public ProjectPanel(MainFrame frame,IController controller, String user) {
+    public ProjectPanel(MainFrame frame, IController controller, String user) {
         super(frame, controller, user + " · Sin proyecto");
         this.frame = frame;
         this.controller = controller;
@@ -50,24 +49,28 @@ public class ProjectPanel extends SessionPanel {
 
     private JPanel createProjectTab() {
         JPanel tab = ViewUtils.createPanel(Color.WHITE);
-        ViewUtils.styleAsTab(tab);
-        tab.add(ViewUtils.createLabel("Aún no participas en un proyecto. Crea uno o acepta una invitación en «Círculo e invitaciones»."),
-                Cell.at(0, 0).span(2).insets(5, 5, 20, 5).build());
-        nameField = ViewUtils.createTextField();
-        ViewUtils.addFormRow(tab, 1, "Nombre del proyecto", nameField);
-        budgetField = ViewUtils.createTextField();
-        ViewUtils.addFormRow(tab, 2, "Presupuesto total ($)", budgetField);
-        categoriesField = ViewUtils.createTextField();
-        ViewUtils.addFormRow(tab, 3, "Categorías (Nombre:monto, ...)", categoriesField);
-        ViewUtils.addFiller(tab, 4, 2);
-        tab.add(createActionBar(), Cell.at(5, 0).span(2).growX().build());
-        return tab;
-    }
 
-    private JPanel createActionBar() {
-        JButton createButton = ViewUtils.createPrimaryButton("Crear proyecto");
+        tab.add(ViewUtils.createLabel(
+                "Aún no participas en un proyecto. Crea uno o acepta una invitación en «Círculo e invitaciones».",
+                20, 20, 780));
+
+        tab.add(ViewUtils.createLabel("Nombre del proyecto", 20, 70, 180));
+        nameField = ViewUtils.createTextField(210, 70, 450);
+        tab.add(nameField);
+
+        tab.add(ViewUtils.createLabel("Presupuesto total ($)", 20, 115, 180));
+        budgetField = ViewUtils.createTextField(210, 115, 450);
+        tab.add(budgetField);
+
+        tab.add(ViewUtils.createLabel("Categorías (Nombre:monto, ...)", 20, 160, 190));
+        categoriesField = ViewUtils.createTextField(210, 160, 450);
+        tab.add(categoriesField);
+
+        JButton createButton = ViewUtils.createPrimaryButton("Crear proyecto", 680, 680, 130, 30);
         createButton.addActionListener(e -> createProject());
-        return ViewUtils.createButtonBar(createButton);
+        tab.add(createButton);
+
+        return tab;
     }
 
     private void createProject() {
@@ -117,7 +120,7 @@ public class ProjectPanel extends SessionPanel {
         return true;
     }
 
-    private boolean invalid(String message){
+    private boolean invalid(String message) {
         ViewUtils.showMessage(this, message);
         return false;
     }
