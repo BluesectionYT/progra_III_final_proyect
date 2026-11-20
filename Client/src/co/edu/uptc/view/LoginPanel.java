@@ -19,18 +19,18 @@ public class LoginPanel extends JPanel {
     private JButton loginButton;
     private JLabel errorLabel;
 
-    public LoginPanel(IController controller, Runnable onLogin) {
+    public LoginPanel(IController controller) {
         super(new GridBagLayout());
         this.controller = controller;
         setBackground(ViewUtils.BACKGROUND);
-        initComponents(onLogin);
+        initComponents();
     }
 
-    private void initComponents(Runnable onLogin) {
-        add(createForm(onLogin), Cell.at(0, 0).center().build());
+    private void initComponents() {
+        add(createForm(), Cell.at(0, 0).center().build());
     }
 
-    private JPanel createForm(Runnable onLogin) {
+    private JPanel createForm() {
         JPanel form = ViewUtils.createPanel(ViewUtils.BACKGROUND);
 
         JLabel title = new JLabel("Presupuesto de Proyecto", SwingConstants.CENTER);
@@ -46,7 +46,7 @@ public class LoginPanel extends JPanel {
         createAccountButton = ViewUtils.createButton("Crear cuenta");
         createAccountButton.addActionListener(e -> createAccount());
         loginButton = ViewUtils.createPrimaryButton("Ingresar");
-        loginButton.addActionListener(e -> onLogin.run());
+        loginButton.addActionListener(e -> login());
         form.add(ViewUtils.createButtonBar(createAccountButton, loginButton), Cell.at(3, 0).span(2).growX().build());
 
         errorLabel = new JLabel("●  Usuario o contraseña incorrectos");
@@ -57,12 +57,11 @@ public class LoginPanel extends JPanel {
         return form;
     }
 
-    private void login(Runnable onLogin) {
+    private void login() {
         errorLabel.setVisible(false);
-        if (!hasCredentials()) {
-            return;
+        if (hasCredentials()) {
+            controller.login(getUser(), getPassword());
         }
-        onLogin.run();
     }
 
     private void createAccount() {

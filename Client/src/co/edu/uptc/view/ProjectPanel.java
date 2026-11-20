@@ -34,6 +34,17 @@ public class ProjectPanel extends SessionPanel {
         addTab("Círculo e invitaciones", new CirclePanel(controller, true));
     }
 
+    @Override
+    protected void onTabSelected(String title) {
+        if (controller == null) {
+            return;
+        }
+        if ("Círculo e invitaciones".equals(title)) {
+            controller.getCircle();
+            controller.getInvitations();
+        }
+    }
+
     private JPanel createProjectTab() {
         JPanel tab = ViewUtils.createPanel(Color.WHITE);
         ViewUtils.styleAsTab(tab);
@@ -64,7 +75,6 @@ public class ProjectPanel extends SessionPanel {
         if (password != null) {
             double budget = ViewUtils.parseAmount(budgetField.getText());
             controller.createProject(nameField.getText().trim(), budget, categories, password);
-            frame.showAdmin(user, nameField.getText());
         }
     }
 

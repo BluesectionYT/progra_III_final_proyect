@@ -1,6 +1,7 @@
 package co.edu.uptc.view;
 
 import java.awt.GridBagLayout;
+import java.awt.Component;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -32,19 +33,19 @@ public abstract class SessionPanel extends JPanel {
         headerButtons.setOpaque(false);
         add(headerButtons, Cell.at(0, 1).east().insets(10, 5, 5, 20).build());
         JButton logoutButton = ViewUtils.createButton("Cerrar sesión");
-        logoutButton.addActionListener(e -> {
-            controller.logout();
-            frame.showLogin();
-        });
+        logoutButton.addActionListener(e -> controller.logout());
         headerButtonList.add(logoutButton);
         rebuildHeaderButtons();
     }
 
     private void initTabs() {
         tabs = new JTabbedPane();
-        add(tabs, Cell.at(1, 0).span(2).grow().insets(5, 20, 20, 20).build());
-        notificationsPanel = new NotificationsPanel();
-        tabs.addTab(TAB_NOTIFICATIONS, notificationsPanel);
+        tabs.addChangeListener(e -> {
+            int index = tabs.getSelectedIndex();
+            if (index >= 0) {
+                onTabSelected(tabs.getTitleAt(index));
+            }
+        });
     }
 
     private void rebuildHeaderButtons() {
@@ -74,5 +75,19 @@ public abstract class SessionPanel extends JPanel {
 
     public void addNotification(String message) {
         notificationsPanel.addNotification(message);
+    }
+
+    protected void onTabSelected(String title) {
+        
+    }
+
+    public <T> T findTab(Class<T> type) {
+        for (int i = 0; i < tabs.getTabCount(); i++) {
+            Component component = tabs.getComponentAt(i);
+            if (type.isInstance(component)) {
+                return type.cast(component);
+            }
+        }
+        return null;
     }
 }
