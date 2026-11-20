@@ -76,18 +76,6 @@ public class Controller implements IController {
         System.exit(0);
     }
 
-    // ------------------------------------------------------------------
-    // Mensajes en pantalla desde cualquier hilo
-    // ------------------------------------------------------------------
-
-    /**
-     * Muestra un error y ESPERA a que el usuario lo cierre antes de continuar.
-     * Se usa solo al cerrar la aplicación: close() llama a System.exit(0) justo después,
-     * y si el diálogo no fuera bloqueante el programa terminaría antes de que se vea.
-     * - isEventDispatchThread(): ¿ya estoy en el hilo de Swing? Entonces lo muestro directo.
-     * - invokeAndWait(): si estoy en otro hilo (p. ej. el ListenerThread), le pido al hilo de Swing
-     *   que lo muestre y me quedo esperando a que termine.
-     */
     private void showMessage(String message) {
         try {
             if (SwingUtilities.isEventDispatchThread()) {
@@ -110,18 +98,6 @@ public class Controller implements IController {
         }
     }
 
-    /**
-     * Muestra un error del servidor SIN esperar: invokeLater() deja la tarea en la cola del hilo
-     * de Swing y el ListenerThread sigue leyendo mensajes sin quedarse bloqueado.
-     */
-    private void showServerError(String error) {
-        SwingUtilities.invokeLater(() -> frame.showGeneralError(error));
-    }
-
-    // ------------------------------------------------------------------
-    // Despacho de respuestas del servidor (cada grupo es un switch)
-    // ------------------------------------------------------------------
-
     public void processData(String data) {
         Message message = jsonReader.jsonToMessage(data);
         MessageCategory category = message.getCategory();
@@ -143,7 +119,6 @@ public class Controller implements IController {
         remainingCommands(category);
     }
 
-    /** Las respuestas de sesión se manejan aparte porque muestran el error en el login, no en un diálogo general. */
     private boolean isSessionCommand(MessageCategory category) {
         return category == MessageCategory.REGISTER
                 || category == MessageCategory.LOGIN
@@ -263,10 +238,6 @@ public class Controller implements IController {
         }
     }
 
-    // ------------------------------------------------------------------
-    // Lectura de la respuesta JSON
-    // ------------------------------------------------------------------
-
     private JsonObject parseResponse(Message message) {
         return JsonParser.parseString(message.getText()).getAsJsonObject();
     }
@@ -291,9 +262,6 @@ public class Controller implements IController {
         return list;
     }
 
-    // ------------------------------------------------------------------
-    // Sesión (aquí SÍ se revisa ok, porque el error va al formulario de login)
-    // ------------------------------------------------------------------
 
     private void onRegister(JsonObject response) {
         if (isOk(response)) {
@@ -332,9 +300,6 @@ public class Controller implements IController {
         SwingUtilities.invokeLater(frame::showProject);
     }
 
-    // ------------------------------------------------------------------
-    // Círculo, invitaciones y proyecto
-    // ------------------------------------------------------------------
 
     private void onCircle(JsonObject response) {
         List<String> members = toStringList(response.getAsJsonArray("data"));
@@ -370,10 +335,6 @@ public class Controller implements IController {
         List<String> candidates = toStringList(data.getAsJsonArray("candidates"));
         SwingUtilities.invokeLater(() -> frame.setTeam(members, candidates));
     }
-
-    // ------------------------------------------------------------------
-    // Resumen, historial y solicitudes
-    // ------------------------------------------------------------------
 
     private void onSummary(JsonObject response) {
         JsonObject data = dataOf(response);
@@ -482,10 +443,6 @@ public class Controller implements IController {
                 return "Pendiente";
         }
     }
-
-    // ------------------------------------------------------------------
-    // Envío de peticiones al servidor
-    // ------------------------------------------------------------------
 
     public synchronized void sendData(Message message) {
         if (sender == null || message == null) {
