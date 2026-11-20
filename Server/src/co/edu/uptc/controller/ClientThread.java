@@ -6,6 +6,16 @@ import co.edu.uptc.net.JSONReader;
 import co.edu.uptc.net.Message;
 import co.edu.uptc.net.MessageCategory;
 import co.edu.uptc.net.Observer;
+import co.edu.uptc.interfaces.IPasswordHasher;
+import co.edu.uptc.model.Category;
+import co.edu.uptc.model.Project;
+import java.util.ArrayList;
+import java.util.HashSet;
+import java.util.LinkedHashMap;
+import java.util.Set;
+import com.google.gson.JsonElement;
+import com.google.gson.JsonObject;
+import com.google.gson.JsonParser;
 
 import java.io.DataOutputStream;
 import java.io.IOException;
@@ -23,11 +33,13 @@ public class ClientThread extends Thread implements Observer {
     private Controller controller;
     private User user;
     private JSONReader jsonReader;
+    private IPasswordHasher hasher;
 
     public ClientThread(Socket socket, IProjectManager projectManager, Controller controller) {
         this.socket = socket;
         this.projectManager = projectManager;
         this.controller = controller;
+        this.hasher = controller.getHasher();
     }
 
     @Override
@@ -154,6 +166,7 @@ public class ClientThread extends Thread implements Observer {
             case NOTIFY:
                 break;
             case EXIT:
+                controller.saveData();
                 closeConnection();
                 break;
         }
