@@ -1,4 +1,4 @@
-package co.edu.uptc.net;
+package co.edu.uptc.enums;
 
 public enum MessageCategory {
     REGISTER,

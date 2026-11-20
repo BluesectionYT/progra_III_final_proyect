@@ -1,13 +1,11 @@
 package co.edu.uptc.controller;
 
 import co.edu.uptc.interfaces.IController;
-import co.edu.uptc.interfaces.IPasswordHasher;
 import co.edu.uptc.net.JSONReader;
 import co.edu.uptc.net.Message;
-import co.edu.uptc.net.MessageCategory;
-import co.edu.uptc.net.PasswordHasher;
-import co.edu.uptc.view.MainFrame;
-import co.edu.uptc.view.ViewUtils;
+import co.edu.uptc.enums.MessageCategory;
+import co.edu.uptc.view.frames.MainFrame;
+import co.edu.uptc.view.utills.ViewUtils;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
 import com.google.gson.JsonArray;
@@ -34,7 +32,6 @@ public class Controller implements IController {
     private JSONReader jsonReader;
     private boolean closed;
     private String currentUser;
-    private final IPasswordHasher passwordHasher = new PasswordHasher();
     private final Gson gson = new Gson();
 
     public Controller() {
@@ -535,7 +532,7 @@ public class Controller implements IController {
     @Override
     public void register(String user, String password) {
         sendRequest(MessageCategory.REGISTER,
-            body("username", user.trim(), "passwordHash", passwordHasher.hash(password)));
+            body("username", user.trim(), "password", password));
     }
 
     @Override

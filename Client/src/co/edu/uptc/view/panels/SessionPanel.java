@@ -1,4 +1,4 @@
-package co.edu.uptc.view;
+package co.edu.uptc.view.panels;
 
 import java.awt.GridBagLayout;
 import java.awt.Component;
@@ -11,6 +11,9 @@ import javax.swing.JPanel;
 import javax.swing.JTabbedPane;
 
 import co.edu.uptc.interfaces.IController;
+import co.edu.uptc.view.utills.Cell;
+import co.edu.uptc.view.utills.ViewUtils;
+import co.edu.uptc.view.frames.MainFrame;
 
 public abstract class SessionPanel extends JPanel {
     public static final String TAB_NOTIFICATIONS = "Notificaciones";

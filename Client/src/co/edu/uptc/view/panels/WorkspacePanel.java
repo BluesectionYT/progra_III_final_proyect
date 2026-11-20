@@ -1,4 +1,4 @@
-package co.edu.uptc.view;
+package co.edu.uptc.view.panels;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -7,7 +7,10 @@ import javax.swing.JButton;
 import javax.swing.JOptionPane;
 import javax.swing.JPanel;
 
+import co.edu.uptc.enums.ProjectRole;
 import co.edu.uptc.interfaces.IController;
+import co.edu.uptc.view.utills.ViewUtils;
+import co.edu.uptc.view.frames.MainFrame;
 
 public class WorkspacePanel extends SessionPanel {
     private static final String TAB_SUMMARY = "Resumen";
@@ -22,6 +25,12 @@ public class WorkspacePanel extends SessionPanel {
     private String projectName;
     private ProjectRole role;
     private Map<String, JPanel> storedPanels;
+    private SummaryPanel summaryPanel;
+    private RequestsPanel requestsPanel;
+    private ApprovalPanel approvalPanel;
+    private HistoryPanel historyPanel;
+    private TeamPanel teamPanel;
+    private CirclePanel circlePanel;
 
     public WorkspacePanel(MainFrame frame, IController controller, String user, String projectName, ProjectRole role) {
         super(frame,controller, user + " · " + role.getLabel() + " de «" + projectName + "»");
@@ -34,17 +43,23 @@ public class WorkspacePanel extends SessionPanel {
     }
 
     private void initComponents() {
-        addTab(TAB_SUMMARY, new SummaryPanel());
-        addTab(TAB_REQUESTS, new RequestsPanel(controller));
-        addTab(TAB_APPROVAL, new ApprovalPanel(controller));
-        addTab(TAB_HISTORY, new HistoryPanel(controller));
-        addTab(TAB_TEAM, new TeamPanel(frame, controller));
-        addTab(TAB_CIRCLE, new CirclePanel(controller, false));
+        this.summaryPanel = new SummaryPanel();
+        addTab(TAB_SUMMARY, summaryPanel);
+        this.requestsPanel = new RequestsPanel(controller);
+        addTab(TAB_REQUESTS, requestsPanel);
+        this.approvalPanel = new ApprovalPanel(controller);
+        addTab(TAB_APPROVAL, approvalPanel);
+        this.historyPanel = new HistoryPanel(controller);
+        addTab(TAB_HISTORY, historyPanel);
+        this.teamPanel = new TeamPanel(frame, controller);
+        addTab(TAB_TEAM, teamPanel);
+        this.circlePanel = new CirclePanel(controller, false);
+        addTab(TAB_CIRCLE, circlePanel);
         applyRole();
     }
 
     private void applyRole() {
-        boolean admin = role == ProjectRole.ADMIN;
+        boolean admin = (role == ProjectRole.ADMIN);
         setTabEnabled(TAB_REQUESTS, !admin);
         setTabEnabled(TAB_APPROVAL, admin);
         setTabEnabled(TAB_TEAM, admin);
@@ -89,14 +104,5 @@ public class WorkspacePanel extends SessionPanel {
         if (option == JOptionPane.YES_OPTION) {
             controller.leaveProject();
         }
-    }
-
-    public void addAndStorePanel(String panelName, JPanel panel){
-        storedPanels.put(panelName, panel);
-        this.add(panel, panelName);
-    }
-
-    public JPanel getStoredPanel(String panelName){
-        return storedPanels.get(panelName);
     }
 }

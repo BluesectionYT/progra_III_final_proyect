@@ -1,5 +1,7 @@
 package co.edu.uptc.model;
 
+import co.edu.uptc.enums.RequestStatus;
+
 import java.time.LocalDateTime;
 
 public class ExpenseRequest {

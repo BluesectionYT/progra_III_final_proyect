@@ -4,7 +4,7 @@ import co.edu.uptc.interfaces.IProjectManager;
 import co.edu.uptc.model.Category;
 import co.edu.uptc.model.ExpenseRequest;
 import co.edu.uptc.model.Project;
-import co.edu.uptc.model.RequestStatus;
+import co.edu.uptc.enums.RequestStatus;
 import co.edu.uptc.model.User;
 import co.edu.uptc.persistence.StateSnapshot.CategoryData;
 import co.edu.uptc.persistence.StateSnapshot.ProjectData;

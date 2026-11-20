@@ -1,4 +1,4 @@
-package co.edu.uptc.view;
+package co.edu.uptc.view.panels;
 
 import java.awt.GridBagLayout;
 import java.util.List;
@@ -9,6 +9,9 @@ import javax.swing.JList;
 import javax.swing.JPanel;
 
 import co.edu.uptc.interfaces.IController;
+import co.edu.uptc.view.utills.Cell;
+import co.edu.uptc.view.utills.ViewUtils;
+import co.edu.uptc.view.frames.MainFrame;
 
 public class TeamPanel extends JPanel {
     private IController controller;

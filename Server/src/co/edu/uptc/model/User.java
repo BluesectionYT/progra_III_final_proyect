@@ -1,8 +1,9 @@
 package co.edu.uptc.model;
 
+import co.edu.uptc.enums.Role;
+
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Objects;
 
 public class User {
     private String username;

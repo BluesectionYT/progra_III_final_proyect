@@ -1,6 +1,6 @@
 package co.edu.uptc.persistence;
 
-import co.edu.uptc.model.RequestStatus;
+import co.edu.uptc.enums.RequestStatus;
 
 import java.util.ArrayList;
 import java.util.List;

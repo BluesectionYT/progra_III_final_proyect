@@ -6,22 +6,17 @@ import co.edu.uptc.model.User;
 import co.edu.uptc.model.Project;
 import co.edu.uptc.model.Category;
 import co.edu.uptc.model.ExpenseRequest;
-import co.edu.uptc.model.RequestStatus;
-import co.edu.uptc.model.SortCriteria;
+import co.edu.uptc.enums.RequestStatus;
+import co.edu.uptc.enums.SortCriteria;
 import co.edu.uptc.net.JSONReader;
 import co.edu.uptc.net.Message;
-import co.edu.uptc.net.MessageCategory;
-import co.edu.uptc.net.Observer;
-import co.edu.uptc.interfaces.IPasswordHasher;
-import co.edu.uptc.model.Category;
-import co.edu.uptc.model.Project;
+import co.edu.uptc.enums.MessageCategory;
+import co.edu.uptc.interfaces.Observer;
+
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.LinkedHashMap;
 import java.util.Set;
-import com.google.gson.JsonElement;
-import com.google.gson.JsonObject;
-import co.edu.uptc.net.PasswordHasher;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParseException;
@@ -30,13 +25,9 @@ import com.google.gson.JsonParser;
 import java.io.DataOutputStream;
 import java.io.IOException;
 import java.net.Socket;
-import java.util.ArrayList;
 import java.util.HashMap;
-import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.HashSet;
-import java.util.Set;
 import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
 import java.time.format.DateTimeParseException;
@@ -75,7 +66,7 @@ public class ClientThread extends Thread implements Observer {
         }
     }
 
-    public void sendMessage(Message message) {
+    public synchronized void sendMessage(Message message) {
         String messageAsString = jsonReader.messageToJson(message);
         if (messageAsString != null) {
             try {
@@ -88,14 +79,16 @@ public class ClientThread extends Thread implements Observer {
 
     public void processData(String data) {
         Message message = jsonReader.jsonToMessage(data);
-        sessionCommands(message);
-        workCircleCommands(message);
-        projectCommands(message);
-        historyCommands(message);
-        requestsCommands(message);
-        approveCommands(message);
-        teamCommands(message);
-        remainingCommands(message);
+        synchronized (projectManager) {
+            sessionCommands(message);
+            workCircleCommands(message);
+            projectCommands(message);
+            historyCommands(message);
+            requestsCommands(message);
+            approveCommands(message);
+            teamCommands(message);
+            remainingCommands(message);
+        }
     }
 
     private void sessionCommands(Message message) {
@@ -119,13 +112,13 @@ public class ClientThread extends Thread implements Observer {
         try {
             JsonObject body = JsonParser.parseString(message.getText()).getAsJsonObject();
             String username = readField(body, "username");
-            String passwordHash = readField(body, "passwordHash");
-            if (username == null || username.isBlank() || passwordHash == null || passwordHash.isBlank()) {
+            String password = readField(body, "password");
+            if (username == null || username.isBlank() || password == null || password.isBlank()) {
                 sendResponse(false, "Usuario y contraseña son obligatorios", MessageCategory.REGISTER, null);
                 return;
             }
             synchronized (projectManager) {
-                projectManager.registerUser(username.trim(), passwordHash);
+                projectManager.registerUser(username.trim(), hasher.hash(password));
             }
             sendResponse(true, null, MessageCategory.REGISTER, null);
         } catch (IllegalArgumentException e) {
@@ -148,7 +141,7 @@ public class ClientThread extends Thread implements Observer {
             synchronized (projectManager) {
                 found = projectManager.findUser(username);
             }
-            if (found == null || password == null || !passwordHasher.verify(password, found.getPasswordHash())) {
+            if (found == null || password == null || !hasher.verify(password, found.getPasswordHash())) {
                 sendResponse(false, "Usuario o contraseña incorrectos", MessageCategory.LOGIN, null);
                 return;
             }
@@ -218,7 +211,7 @@ public class ClientThread extends Thread implements Observer {
     }
 
     private void checkPassword(String password) {
-        if (password == null || !passwordHasher.verify(password, user.getPasswordHash())) {
+        if (password == null || !hasher.verify(password, user.getPasswordHash())) {
             throw new IllegalArgumentException("Contraseña incorrecta");
         }
     }
@@ -439,7 +432,7 @@ public class ClientThread extends Thread implements Observer {
                 throw new IllegalArgumentException("El presupuesto total debe ser mayor que cero");
             }
             ArrayList<Category> categories = parseCategories(body, budget);
-            if (password == null || !passwordHasher.verify(password, user.getPasswordHash())) {
+            if (password == null || !hasher.verify(password, user.getPasswordHash())) {
                 throw new IllegalArgumentException("Contraseña incorrecta");
             }
             String projectName = name.trim();
@@ -903,7 +896,7 @@ public class ClientThread extends Thread implements Observer {
         sendMessage(message);
     }
 
-    public void sendResponse(boolean ok, String errorMsg, MessageCategory category, Object extraData) {
+    public synchronized void sendResponse(boolean ok, String errorMsg, MessageCategory category, Object extraData) {
         Map<String, Object> responseContent = new HashMap<>();
         responseContent.put("ok", ok);
         
@@ -918,7 +911,7 @@ public class ClientThread extends Thread implements Observer {
         try {
             sender.writeUTF(gson.toJson(responseMessage));
         } catch (IOException e) {
-            e.printStackTrace();
+            closeConnection();
         }
     }
 

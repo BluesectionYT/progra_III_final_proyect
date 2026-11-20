@@ -1,4 +1,4 @@
-package co.edu.uptc.view;
+package co.edu.uptc.view.panels;
 
 import java.awt.GridBagLayout;
 
@@ -10,6 +10,8 @@ import javax.swing.JTextField;
 import javax.swing.SwingConstants;
 
 import co.edu.uptc.interfaces.IController;
+import co.edu.uptc.view.utills.Cell;
+import co.edu.uptc.view.utills.ViewUtils;
 
 public class LoginPanel extends JPanel {
     private IController controller;
