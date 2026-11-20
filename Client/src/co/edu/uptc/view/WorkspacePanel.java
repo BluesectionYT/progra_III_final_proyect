@@ -53,6 +53,30 @@ public class WorkspacePanel extends SessionPanel {
         }
     }
 
+    @Override
+    protected void onTabSelected(String title) {
+        if (controller == null) {
+            return;
+        }
+        switch (title) {
+            case TAB_SUMMARY:
+                controller.getSummary();
+                break;
+            case TAB_REQUESTS:
+                controller.getMyRequests();
+                break;
+            case TAB_APPROVAL:
+                controller.getPending();
+                break;
+            case TAB_TEAM:
+                controller.getTeam();
+                break;
+            case TAB_CIRCLE:
+                controller.getCircle();
+                break;
+        }
+    }
+
     private void addLeaveButton() {
         JButton leaveButton = ViewUtils.createButton("Salir del proyecto");
         leaveButton.addActionListener(e -> leaveProject());
@@ -64,7 +88,6 @@ public class WorkspacePanel extends SessionPanel {
                 "Salir del proyecto", JOptionPane.YES_NO_OPTION);
         if (option == JOptionPane.YES_OPTION) {
             controller.leaveProject();
-            frame.showProject();
         }
     }
 

@@ -99,7 +99,6 @@ public class TeamPanel extends JPanel {
         String password = ViewUtils.askPassword(this, "Confirma tu contraseña para cerrar el proyecto");
         if (password != null) {
             controller.closeProject(password);
-            frame.showProject();
         }
     }
 

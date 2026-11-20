@@ -2,6 +2,7 @@ package co.edu.uptc.controller;
 
 import co.edu.uptc.interfaces.IProjectManager;
 import co.edu.uptc.model.ProjectManager;
+import co.edu.uptc.model.User;
 import co.edu.uptc.net.Message;
 import co.edu.uptc.net.MessageCategory;
 import co.edu.uptc.net.Observer;
@@ -49,17 +50,29 @@ public class Controller implements Subject {
     }
 
     public void notifyUser(String username, MessageCategory category, Object data) {
-    for (Observer obs : observers) { 
-        if (obs instanceof ClientThread) {
-            ClientThread client = (ClientThread) obs;
-            
-            if (client.getUser() != null && client.getUser().getUsername().equals(username)) {
-                client.sendResponse(true, null, category, data);
-                break;
+        for (Observer obs : observers) { 
+            if (obs instanceof ClientThread) {
+                ClientThread client = (ClientThread) obs;
+                
+                if (client.getUser() != null && client.getUser().getUsername().equals(username)) {
+                    client.sendResponse(true, null, category, data);
+                    break;
+                }
             }
         }
     }
-}
+
+    public boolean isLoggedIn(String username) {
+        for (Observer obs : observers) {
+            if (obs instanceof ClientThread) {
+                User u = ((ClientThread) obs).getUser();
+                if (u != null && u.getUsername().equals(username)) {
+                    return true;
+                }
+            }
+        }
+        return false;
+    }
 
     @Override
     public void attach(Observer observer) {
