@@ -1,7 +1,5 @@
 package co.edu.uptc.view.panels;
 
-import java.awt.GridBagLayout;
-
 import javax.swing.JButton;
 import javax.swing.JLabel;
 import javax.swing.JPanel;
@@ -10,66 +8,59 @@ import javax.swing.JTextField;
 import javax.swing.SwingConstants;
 
 import co.edu.uptc.interfaces.IController;
-import co.edu.uptc.view.utills.Cell;
+import co.edu.uptc.view.frames.MainFrame;
 import co.edu.uptc.view.utills.ViewUtils;
 
 public class LoginPanel extends JPanel {
     private IController controller;
+    private MainFrame frame;
     private JTextField userField;
     private JPasswordField passwordField;
     private JButton createAccountButton;
     private JButton loginButton;
     private JLabel errorLabel;
 
-    public LoginPanel(IController controller) {
-        super(new GridBagLayout());
+    public LoginPanel(MainFrame frame, IController controller) {
+        setLayout(null);
         this.controller = controller;
+        this.frame = frame;
         setBackground(ViewUtils.BACKGROUND);
         initComponents();
     }
 
     private void initComponents() {
-        add(createForm(), Cell.at(0, 0).center().build());
-    }
-
-    private JPanel createForm() {
-        JPanel form = ViewUtils.createPanel(ViewUtils.BACKGROUND);
-
         JLabel title = new JLabel("Presupuesto de Proyecto", SwingConstants.CENTER);
         title.setFont(ViewUtils.TITLE_FONT);
-        form.add(title, Cell.at(0, 0).span(2).center().insets(0, 5, 25, 5).build());
+        title.setBounds(0, 250, 900, 40);
+        add(title);
 
-        userField = ViewUtils.createTextField();
-        ViewUtils.addFormRow(form, 1, "Usuario", userField);
+        add(ViewUtils.createLabel("Usuario", 280, 330, 80));
+        userField = ViewUtils.createTextField(370, 330, 250);
+        add(userField);
 
-        passwordField = ViewUtils.createPasswordField();
-        ViewUtils.addFormRow(form, 2, "Contraseña", passwordField);
+        add(ViewUtils.createLabel("Contraseña", 280, 370, 80));
+        passwordField = ViewUtils.createPasswordField(370, 370, 250);
+        add(passwordField);
 
-        createAccountButton = ViewUtils.createButton("Crear cuenta");
-        createAccountButton.addActionListener(e -> createAccount());
-        loginButton = ViewUtils.createPrimaryButton("Ingresar");
+        createAccountButton = ViewUtils.createButton("Crear cuenta", 370, 420, 120, 28);
+        createAccountButton.addActionListener(e -> frame.showRegister());
+        add(createAccountButton);
+
+        loginButton = ViewUtils.createPrimaryButton("Ingresar", 500, 420, 120, 30);
         loginButton.addActionListener(e -> login());
-        form.add(ViewUtils.createButtonBar(createAccountButton, loginButton), Cell.at(3, 0).span(2).growX().build());
+        add(loginButton);
 
         errorLabel = new JLabel("●  Usuario o contraseña incorrectos");
         errorLabel.setForeground(ViewUtils.ERROR);
+        errorLabel.setBounds(370, 460, 400, 28);
         errorLabel.setVisible(false);
-        form.add(errorLabel, Cell.at(4, 0).span(2).build());
-
-        return form;
+        add(errorLabel);
     }
 
     private void login() {
         errorLabel.setVisible(false);
         if (hasCredentials()) {
             controller.login(getUser(), getPassword());
-        }
-    }
-
-    private void createAccount() {
-        errorLabel.setVisible(false);
-        if (hasCredentials()) {
-            controller.register(getUser(), getPassword());
         }
     }
 

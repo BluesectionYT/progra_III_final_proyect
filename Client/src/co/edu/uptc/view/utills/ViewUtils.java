@@ -2,15 +2,12 @@ package co.edu.uptc.view.utills;
 
 import java.awt.Color;
 import java.awt.Component;
-import java.awt.Dimension;
 import java.awt.Font;
-import java.awt.GridBagLayout;
 import java.time.LocalDate;
 import java.time.format.DateTimeParseException;
 import java.util.List;
 
 import javax.swing.BorderFactory;
-import javax.swing.Box;
 import javax.swing.JButton;
 import javax.swing.JComboBox;
 import javax.swing.JComponent;
@@ -33,46 +30,20 @@ public class ViewUtils {
     public static final Font TITLE_FONT = new Font("SansSerif", Font.PLAIN, 28);
     public static final Font HIGHLIGHT_FONT = new Font("SansSerif", Font.PLAIN, 24);
 
-    private static final int TEXT_FIELD_COLUMNS = 20;
-    private static final Dimension LIST_PREFERRED_SIZE = new Dimension(300, 200);
-    private static final int TAB_MARGIN = 15;
-    private static final int PANEL_MARGIN = 5;
+    private static final int FIELD_HEIGHT = 28;
 
     public static JPanel createPanel(Color background) {
-        JPanel panel = new JPanel(new GridBagLayout());
+        JPanel panel = new JPanel(null);
         panel.setBackground(background);
         return panel;
     }
 
-    public static void styleAsTab(JPanel panel) {
-        panel.setBackground(Color.WHITE);
-        panel.setBorder(BorderFactory.createEmptyBorder(TAB_MARGIN, TAB_MARGIN, TAB_MARGIN, TAB_MARGIN));
-    }
-
-    public static JPanel createTitledPanel(String title) {
+    public static JPanel createTitledPanel(String title, int x, int y, int width, int height) {
         JPanel panel = createPanel(Color.WHITE);
-        panel.setBorder(BorderFactory.createCompoundBorder(
-                BorderFactory.createTitledBorder(title),
-                BorderFactory.createEmptyBorder(PANEL_MARGIN, PANEL_MARGIN, PANEL_MARGIN, PANEL_MARGIN)));
+        panel.setBorder(BorderFactory.createTitledBorder(title));
+        panel.setBounds(x, y, width, height);
         return panel;
     }
-
-    public static JPanel createTablePanel(String title, DefaultTableModel model, int... columnWidths) {
-        JPanel panel = createTitledPanel(title);
-        panel.add(createTableScroll(model, columnWidths), Cell.at(0, 0).grow().build());
-        return panel;
-    }
-
-    public static JPanel createListPanel(String title, JList<String> list, int columns) {
-        JPanel panel = createTitledPanel(title);
-        panel.add(createListScroll(list), Cell.at(0, 0).span(columns).grow().build());
-        return panel;
-    }
-
-    public static JPanel createListPanel(String title, JList<String> list) {
-        return createListPanel(title, list, 1);
-    }
-
 
     public static DefaultTableModel createTableModel(String... columns) {
         return new DefaultTableModel(columns, 0) {
@@ -81,10 +52,6 @@ public class ViewUtils {
                 return false;
             }
         };
-    }
-
-    public static JScrollPane createTableScroll(DefaultTableModel model, int... columnWidths) {
-        return createScroll(createTable(model, columnWidths));
     }
 
     public static JTable createTable(DefaultTableModel model, int... columnWidths) {
@@ -98,55 +65,69 @@ public class ViewUtils {
         return table;
     }
 
-    public static JScrollPane createScroll(JTable table) {
+    public static JScrollPane createScroll(JTable table, int x, int y, int width, int height) {
         JScrollPane scroll = new JScrollPane(table);
         scroll.setColumnHeaderView(table.getTableHeader());
         scroll.getViewport().setBackground(Color.WHITE);
+        scroll.setBounds(x, y, width, height);
         scroll.setBorder(null);
         return scroll;
     }
 
-    public static JScrollPane createListScroll(JList<String> list) {
+    public static JScrollPane createTableScroll(DefaultTableModel model, int x, int y, int width, int height,
+            int... columnWidths) {
+        return createScroll(createTable(model, columnWidths), x, y, width, height);
+    }
+
+    public static JScrollPane createListScroll(JList<String> list, int x, int y, int width, int height) {
         JScrollPane scroll = new JScrollPane(list);
         scroll.setBorder(BorderFactory.createLineBorder(Color.LIGHT_GRAY));
-        scroll.setPreferredSize(LIST_PREFERRED_SIZE);
+        scroll.setBounds(x, y, width, height);
         return scroll;
     }
 
-
-    public static JLabel createLabel(String text) {
-        return new JLabel(text);
+    public static JLabel createLabel(String text, int x, int y, int width) {
+        JLabel label = new JLabel(text);
+        label.setBounds(x, y, width, FIELD_HEIGHT);
+        return label;
     }
 
-    public static JTextField createTextField() {
-        return new JTextField(TEXT_FIELD_COLUMNS);
+    public static JTextField createTextField(int x, int y, int width) {
+        JTextField field = new JTextField();
+        field.setBounds(x, y, width, FIELD_HEIGHT);
+        return field;
     }
 
-    public static JPasswordField createPasswordField() {
-        return new JPasswordField(TEXT_FIELD_COLUMNS);
+    public static JPasswordField createPasswordField(int x, int y, int width) {
+        JPasswordField field = new JPasswordField();
+        field.setBounds(x, y, width, FIELD_HEIGHT);
+        return field;
     }
 
-    public static JComboBox<String> createComboBox(String... items) {
+    public static JComboBox<String> createComboBox(int x, int y, int width, String... items) {
         JComboBox<String> combo = new JComboBox<>(items);
         combo.setBackground(Color.WHITE);
+        combo.setBounds(x, y, width, FIELD_HEIGHT);
         return combo;
     }
 
-    public static JButton createButton(String text) {
-        return new JButton(text);
+    public static JButton createButton(String text, int x, int y, int width, int height) {
+        JButton button = new JButton(text);
+        button.setBounds(x, y, width, height);
+        return button;
     }
 
-    public static JButton createPrimaryButton(String text) {
-        JButton button = new JButton(text);
+    public static JButton createPrimaryButton(String text, int x, int y, int width, int height) {
+        JButton button = createButton(text, x, y, width, height);
         button.setBackground(PRIMARY);
         button.setForeground(Color.WHITE);
         return button;
     }
 
     public static String askPassword(Component parent, String message) {
-        JPasswordField field = createPasswordField();
+        JPasswordField field = new JPasswordField(20);
         field.addAncestorListener(new FocusOnShow(field));
-        int option = JOptionPane.showConfirmDialog(parent, createPasswordPrompt(message, field),
+        int option = JOptionPane.showConfirmDialog(parent, new Object[] { message, field },
                 "Confirmar contraseña", JOptionPane.OK_CANCEL_OPTION, JOptionPane.PLAIN_MESSAGE);
         if (option != JOptionPane.OK_OPTION) {
             return null;
@@ -157,14 +138,6 @@ public class ViewUtils {
             return null;
         }
         return password;
-    }
-
-    static JPanel createPasswordPrompt(String message, JPasswordField field) {
-        JPanel prompt = new JPanel(new GridBagLayout());
-        prompt.setOpaque(false);
-        prompt.add(createLabel(message), Cell.at(0, 0).build());
-        prompt.add(field, Cell.at(1, 0).growX().build());
-        return prompt;
     }
 
     public static void showMessage(Component parent, String message) {
@@ -193,7 +166,7 @@ public class ViewUtils {
         }
     }
 
-    public static void setRows(DefaultTableModel model, List<Object[]> rows){
+    public static void setRows(DefaultTableModel model, List<Object[]> rows) {
         model.setRowCount(0);
         for (Object[] row : rows) {
             model.addRow(row);
@@ -227,29 +200,5 @@ public class ViewUtils {
         } catch (DateTimeParseException e) {
             return false;
         }
-    }
-
-    public static void addFormRow(JPanel panel, int row, String labelText, JComponent field) {
-        panel.add(createLabel(labelText), Cell.at(row, 0).build());
-        panel.add(field, Cell.at(row, 1).growX().build());
-    }
-
-    public static void addLabeledField(JPanel panel, int row, int column, String labelText, JComponent field) {
-        panel.add(createLabel(labelText), Cell.at(row, column).build());
-        panel.add(field, Cell.at(row, column + 1).growX().build());
-    }
-
-    public static JPanel createButtonBar(JButton... buttons) {
-        JPanel bar = createPanel(Color.WHITE);
-        bar.setOpaque(false);
-        bar.add(Box.createHorizontalGlue(), Cell.at(0, 0).growX().build());
-        for (int i = 0; i < buttons.length; i++) {
-            bar.add(buttons[i], Cell.at(0, i + 1).build());
-        }
-        return bar;
-    }
-
-    public static void addFiller(JPanel panel, int row, int columns) {
-        panel.add(Box.createVerticalGlue(), Cell.at(row, 0).span(columns).growY().build());
     }
 }

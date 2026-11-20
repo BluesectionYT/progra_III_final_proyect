@@ -93,7 +93,7 @@ public class WorkspacePanel extends SessionPanel {
     }
 
     private void addLeaveButton() {
-        JButton leaveButton = ViewUtils.createButton("Salir del proyecto");
+        JButton leaveButton = ViewUtils.createButton("Salir del proyecto", 0, 0, 140, 28);
         leaveButton.addActionListener(e -> leaveProject());
         addHeaderButton(leaveButton);
     }

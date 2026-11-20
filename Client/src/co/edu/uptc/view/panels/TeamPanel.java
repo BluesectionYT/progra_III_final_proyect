@@ -1,6 +1,6 @@
 package co.edu.uptc.view.panels;
 
-import java.awt.GridBagLayout;
+import java.awt.Color;
 import java.util.List;
 
 import javax.swing.JButton;
@@ -9,9 +9,8 @@ import javax.swing.JList;
 import javax.swing.JPanel;
 
 import co.edu.uptc.interfaces.IController;
-import co.edu.uptc.view.utills.Cell;
-import co.edu.uptc.view.utills.ViewUtils;
 import co.edu.uptc.view.frames.MainFrame;
+import co.edu.uptc.view.utills.ViewUtils;
 
 public class TeamPanel extends JPanel {
     private IController controller;
@@ -25,39 +24,41 @@ public class TeamPanel extends JPanel {
     private MainFrame frame;
 
     public TeamPanel(MainFrame frame, IController controller) {
-        super(new GridBagLayout());
+        setLayout(null);
         this.frame = frame;
         this.controller = controller;
-        ViewUtils.styleAsTab(this);
+        setBackground(Color.WHITE);
         initComponents();
     }
 
     private void initComponents() {
+        JPanel membersPanel = ViewUtils.createTitledPanel("Integrantes", 15, 15, 815, 680);
         membersList = new JList<>();
-        add(ViewUtils.createListPanel("Integrantes", membersList), Cell.at(0, 0).span(3).grow().build());
+        membersPanel.add(ViewUtils.createListScroll(membersList, 10, 25, 795, 640));
+        add(membersPanel);
         initInviteRow();
         initManagementRow();
     }
 
     private void initInviteRow() {
-        add(ViewUtils.createLabel("Invitar:"), Cell.at(1, 0).build());
-        inviteCombo = ViewUtils.createComboBox();
-        add(inviteCombo, Cell.at(1, 1).growX().build());
-        inviteButton = ViewUtils.createPrimaryButton("Enviar invitación");
+        add(ViewUtils.createLabel("Invitar:", 15, 710, 50));
+        inviteCombo = ViewUtils.createComboBox(70, 710, 90);
+        add(inviteCombo);
+        inviteButton = ViewUtils.createPrimaryButton("Enviar invitación", 170, 710, 150, 28);
         inviteButton.addActionListener(e -> inviteSelectedUser());
-        add(inviteButton, Cell.at(1, 2).build());
+        add(inviteButton);
     }
 
     private void initManagementRow() {
-        removeButton = ViewUtils.createButton("Eliminar integrante");
+        removeButton = ViewUtils.createButton("Eliminar integrante", 330, 710, 160, 28);
         removeButton.addActionListener(e -> removeSelectedMember());
-        transferButton = ViewUtils.createButton("Transferir administración");
+        add(removeButton);
+        transferButton = ViewUtils.createButton("Transferir administración", 500, 710, 190, 28);
         transferButton.addActionListener(e -> transferToSelectedMember());
-        closeProjectButton = ViewUtils.createButton("Cerrar proyecto");
+        add(transferButton);
+        closeProjectButton = ViewUtils.createButton("Cerrar proyecto", 700, 710, 130, 28);
         closeProjectButton.addActionListener(e -> closeProject());
-
-        add(ViewUtils.createButtonBar(removeButton, transferButton, closeProjectButton),
-                Cell.at(2, 0).span(3).growX().build());
+        add(closeProjectButton);
     }
 
     private void inviteSelectedUser() {
@@ -92,7 +93,8 @@ public class TeamPanel extends JPanel {
         if (member == null) {
             return;
         }
-        String password = ViewUtils.askPassword(this, "Confirma tu contraseña para transferir la administración a " + member);
+        String password = ViewUtils.askPassword(this,
+                "Confirma tu contraseña para transferir la administración a " + member);
         if (password != null) {
             controller.transferAdmin(member, password);
         }

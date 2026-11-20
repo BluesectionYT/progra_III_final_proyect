@@ -1,6 +1,6 @@
 package co.edu.uptc.view.panels;
 
-import java.awt.GridBagLayout;
+import java.awt.Color;
 import java.util.List;
 
 import javax.swing.JButton;
@@ -10,7 +10,6 @@ import javax.swing.JTextField;
 import javax.swing.table.DefaultTableModel;
 
 import co.edu.uptc.interfaces.IController;
-import co.edu.uptc.view.utills.Cell;
 import co.edu.uptc.view.utills.ViewUtils;
 
 public class RequestsPanel extends JPanel {
@@ -22,29 +21,39 @@ public class RequestsPanel extends JPanel {
     private DefaultTableModel requestsModel;
 
     public RequestsPanel(IController controller) {
-        super(new GridBagLayout());
+        setLayout(null);
         this.controller = controller;
-        ViewUtils.styleAsTab(this);
+        setBackground(Color.WHITE);
         initComponents();
     }
 
     private void initComponents() {
-        add(createNewRequestPanel(), Cell.at(0, 0).growX().build());
+        add(createNewRequestPanel());
+
         requestsModel = ViewUtils.createTableModel("#", "Fecha", "Concepto", "Categoría", "Monto", "Estado", "Motivo");
-        add(ViewUtils.createTablePanel("Mis solicitudes", requestsModel), Cell.at(1, 0).grow().build());
+        JPanel myRequestsPanel = ViewUtils.createTitledPanel("Mis solicitudes", 15, 230, 815, 480);
+        myRequestsPanel.add(ViewUtils.createTableScroll(requestsModel, 10, 25, 795, 440));
+        add(myRequestsPanel);
     }
 
     private JPanel createNewRequestPanel() {
-        JPanel panel = ViewUtils.createTitledPanel("Nueva solicitud");
-        conceptField = ViewUtils.createTextField();
-        ViewUtils.addFormRow(panel, 0, "Concepto", conceptField);
-        amountField = ViewUtils.createTextField();
-        ViewUtils.addFormRow(panel, 1, "Monto ($)", amountField);
-        categoryCombo = ViewUtils.createComboBox();
-        ViewUtils.addFormRow(panel, 2, "Categoría", categoryCombo);
-        sendButton = ViewUtils.createPrimaryButton("Enviar solicitud");
+        JPanel panel = ViewUtils.createTitledPanel("Nueva solicitud", 15, 15, 815, 200);
+
+        panel.add(ViewUtils.createLabel("Concepto", 20, 30, 100));
+        conceptField = ViewUtils.createTextField(130, 30, 260);
+        panel.add(conceptField);
+
+        panel.add(ViewUtils.createLabel("Monto ($)", 20, 70, 100));
+        amountField = ViewUtils.createTextField(130, 70, 260);
+        panel.add(amountField);
+
+        panel.add(ViewUtils.createLabel("Categoría", 20, 110, 100));
+        categoryCombo = ViewUtils.createComboBox(130, 110, 260);
+        panel.add(categoryCombo);
+
+        sendButton = ViewUtils.createPrimaryButton("Enviar solicitud", 665, 150, 130, 30);
         sendButton.addActionListener(e -> sendRequest());
-        panel.add(ViewUtils.createButtonBar(sendButton), Cell.at(3, 0).span(2).growX().build());
+        panel.add(sendButton);
         return panel;
     }
 
