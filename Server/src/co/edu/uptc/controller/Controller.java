@@ -1,14 +1,15 @@
 package co.edu.uptc.controller;
 
-import co.edu.uptc.interfaces.IPasswordHasher;
-import co.edu.uptc.interfaces.IProjectManager;
-import co.edu.uptc.model.ProjectManager;
-import co.edu.uptc.net.*;
-import co.edu.uptc.model.User;
-import co.edu.uptc.net.Message;
 import co.edu.uptc.enums.MessageCategory;
+import co.edu.uptc.interfaces.IPasswordHasher;
+import co.edu.uptc.interfaces.IPersistence;
+import co.edu.uptc.interfaces.IProjectManager;
 import co.edu.uptc.interfaces.Observer;
 import co.edu.uptc.interfaces.Subject;
+import co.edu.uptc.model.ProjectManager;
+import co.edu.uptc.model.User;
+import co.edu.uptc.net.Message;
+import co.edu.uptc.net.PasswordHasher;
 import co.edu.uptc.persistence.PersistenceJSON;
 import co.edu.uptc.persistence.StateMapper;
 
@@ -19,25 +20,35 @@ import java.util.ArrayList;
 
 public class Controller implements Subject {
     private static final int PORT = 10087;
+    private static final String DATA_PATH = "data/data.json";
     private ServerSocket serverSocket;
     private IProjectManager projectManager;
     private ArrayList<Observer> observers;
-    private PersistenceJSON persistence;
+    private IPersistence persistence;
+    private StateMapper stateMapper;
     private IPasswordHasher hasher;
 
     public Controller() {
         try {
             this.serverSocket = new ServerSocket(PORT);
-            this.observers = new ArrayList<>();
-            this.persistence = new PersistenceJSON();
-            this.hasher = new PasswordHasher();
-            this.projectManager = new ProjectManager();
-            StateMapper mapper = new StateMapper();
-            mapper.restore(persistence.readState("data/data.json"), projectManager);
-            Runtime.getRuntime().addShutdownHook(new Thread(this::saveData));
         } catch (IOException e) {
             throw new RuntimeException(e);
         }
+        this.observers = new ArrayList<>();
+        this.persistence = new PersistenceJSON();
+        this.stateMapper = new StateMapper();
+        this.hasher = new PasswordHasher();
+        this.projectManager = new ProjectManager();
+        loadData();
+        registerShutdownHook();
+    }
+
+    private void loadData() {
+        stateMapper.restore(persistence.readState(DATA_PATH), projectManager);
+    }
+
+    private void registerShutdownHook() {
+        Runtime.getRuntime().addShutdownHook(new Thread(this::saveData));
     }
 
     public void init() {
@@ -54,16 +65,28 @@ public class Controller implements Subject {
     }
 
     public void notifyUser(String username, MessageCategory category, Object data) {
-        for (Observer obs : observers) {
-            if (obs instanceof ClientThread) {
-                ClientThread client = (ClientThread) obs;
+        ClientThread client = findClient(username);
+        if (client != null) {
+            client.sendResponse(true, null, category, data);
+        }
+    }
 
-                if (client.getUser() != null && client.getUser().getUsername().equals(username)) {
-                    client.sendResponse(true, null, category, data);
-                    break;
-                }
+    public boolean isLoggedIn(String username) {
+        return findClient(username) != null;
+    }
+
+    private ClientThread findClient(String username) {
+        for (Observer observer : observers) {
+            if (observer instanceof ClientThread && belongsTo((ClientThread) observer, username)) {
+                return (ClientThread) observer;
             }
         }
+        return null;
+    }
+
+    private boolean belongsTo(ClientThread client, String username) {
+        User user = client.getUser();
+        return user != null && user.getUsername().equals(username);
     }
 
     public IPasswordHasher getHasher() {
@@ -71,20 +94,7 @@ public class Controller implements Subject {
     }
 
     public void saveData() {
-        StateMapper stateMapper = new StateMapper();
-        persistence.saveState("data/data.json", stateMapper.toSnapshot(this.projectManager));
-    }
-
-    public boolean isLoggedIn(String username) {
-        for (Observer obs : observers) {
-            if (obs instanceof ClientThread) {
-                User u = ((ClientThread) obs).getUser();
-                if (u != null && u.getUsername().equals(username)) {
-                    return true;
-                }
-            }
-        }
-        return false;
+        persistence.saveState(DATA_PATH, stateMapper.toSnapshot(this.projectManager));
     }
 
     @Override

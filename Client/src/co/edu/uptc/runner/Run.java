@@ -1,4 +1,4 @@
-package co.edu.uptc.run;
+package co.edu.uptc.runner;
 
 import co.edu.uptc.controller.Controller;
 

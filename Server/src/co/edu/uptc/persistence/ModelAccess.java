@@ -1,15 +1,16 @@
 package co.edu.uptc.persistence;
 
+import co.edu.uptc.enums.ErrorMessages;
+import co.edu.uptc.enums.RequestStatus;
 import co.edu.uptc.model.ExpenseRequest;
 import co.edu.uptc.model.Project;
-import co.edu.uptc.enums.RequestStatus;
 
 import java.lang.reflect.Field;
 import java.time.LocalDateTime;
 
 public class ModelAccess {
     public static void restoreRequest(ExpenseRequest request, int id, RequestStatus status, String reason,
-                               LocalDateTime createdAt, LocalDateTime resolvedAt) {
+                                      LocalDateTime createdAt, LocalDateTime resolvedAt) {
         set(request, "id", id);
         set(request, "status", status);
         set(request, "reason", reason);
@@ -27,7 +28,7 @@ public class ModelAccess {
             field.setAccessible(true);
             field.set(target, value);
         } catch (ReflectiveOperationException e) {
-            throw new IllegalStateException("No se pudo restaurar el campo " + fieldName, e);
+            throw new IllegalStateException(ErrorMessages.FIELD_RESTORE_FAILED.format(fieldName), e);
         }
     }
 }

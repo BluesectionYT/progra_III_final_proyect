@@ -1,15 +1,15 @@
 package co.edu.uptc.view.frames;
 
+import co.edu.uptc.enums.ErrorMessages;
+import co.edu.uptc.enums.ProjectRole;
+import co.edu.uptc.interfaces.IController;
+import co.edu.uptc.view.components.ViewUtils;
+import co.edu.uptc.view.panels.*;
+
+import javax.swing.*;
 import java.awt.event.WindowAdapter;
 import java.awt.event.WindowEvent;
 import java.util.List;
-
-import javax.swing.*;
-
-import co.edu.uptc.enums.ProjectRole;
-import co.edu.uptc.interfaces.IController;
-import co.edu.uptc.view.panels.*;
-import co.edu.uptc.view.utills.ViewUtils;
 
 public class MainFrame extends JFrame {
     private IController controller;
@@ -17,26 +17,35 @@ public class MainFrame extends JFrame {
     private RegisterPanel registerPanel;
 
     public MainFrame(IController controller) {
+        super("Gestión de Presupuesto");
         this.controller = controller;
-        setTitle("Gestión de Presupuesto");
-        setSize(900, 900);
-        setResizable(false);
-        setDefaultCloseOperation(DISPOSE_ON_CLOSE);
-        addWindowListener(new WindowAdapter() {
+        this.setSize(900, 900);
+        this.setResizable(false);
+        closeConfig();
+        this.setLocationRelativeTo(null);
+        showLogin();
+        this.setVisible(true);
+    }
+
+    private void closeConfig() {
+        this.setDefaultCloseOperation(DISPOSE_ON_CLOSE);
+        this.addWindowListener(new WindowAdapter() {
             @Override
             public void windowClosing(WindowEvent e) {
                 controller.sendExit();
                 controller.close(null);
             }
         });
-        setLocationRelativeTo(null);
-        showLogin();
-        setVisible(true);
     }
 
     public void showLogin() {
-        loginPanel = new LoginPanel(this ,controller);
+        loginPanel = new LoginPanel(this, controller);
         showPanel(loginPanel);
+    }
+
+    public void showRegister() {
+        registerPanel = new RegisterPanel(this, controller);
+        showPanel(registerPanel);
     }
 
     public void showProject() {
@@ -61,7 +70,7 @@ public class MainFrame extends JFrame {
         controller.getCircle();
         if (role == ProjectRole.MEMBER) {
             controller.getMyRequests();
-        }else{
+        } else {
             controller.getPending();
             controller.getTeam();
         }
@@ -73,6 +82,13 @@ public class MainFrame extends JFrame {
         repaint();
     }
 
+    private <T> T findPanel(Class<T> type) {
+        if (getContentPane() instanceof SessionPanel) {
+            return ((SessionPanel) getContentPane()).findTab(type);
+        }
+        return null;
+    }
+
     public void addNotification(String message) {
         if (getContentPane() instanceof SessionPanel) {
             ((SessionPanel) getContentPane()).addNotification(message);
@@ -80,28 +96,17 @@ public class MainFrame extends JFrame {
     }
 
     public void setCircle(List<String> members) {
-        if (getContentPane() instanceof SessionPanel) {
-            CirclePanel panel = ((SessionPanel) getContentPane()).findTab(CirclePanel.class);
-            if (panel != null) {
-                panel.setCircle(members);
-            }
+        CirclePanel circle = findPanel(CirclePanel.class);
+        if (circle != null) {
+            circle.setCircle(members);
         }
     }
 
     public void setInvitations(List<String> invitations) {
-        if (getContentPane() instanceof SessionPanel) {
-            CirclePanel panel = ((SessionPanel) getContentPane()).findTab(CirclePanel.class);
-            if (panel != null) {
-                panel.setInvitations(invitations);
-            }
+        CirclePanel circle = findPanel(CirclePanel.class);
+        if (circle != null) {
+            circle.setInvitations(invitations);
         }
-    }
-
-    private <T> T findPanel(Class<T> type) {
-        if (getContentPane() instanceof SessionPanel) {
-            return ((SessionPanel) getContentPane()).findTab(type);
-        }
-        return null;
     }
 
     public void setProjectInfo(List<String> categories, String balance) {
@@ -162,8 +167,7 @@ public class MainFrame extends JFrame {
     public void requestResolved(String balance, List<Object[]> rows) {
         ApprovalPanel approval = findPanel(ApprovalPanel.class);
         if (approval != null) {
-            approval.setBalance(balance);
-            approval.setPending(rows);
+            setPending(balance, rows);
             approval.clearReason();
         }
     }
@@ -195,17 +199,13 @@ public class MainFrame extends JFrame {
             loginPanel.showError(message);
         }
     }
+
     public void showGeneralError(String message) {
         JOptionPane.showMessageDialog(this, message, "Error", JOptionPane.ERROR_MESSAGE);
     }
 
-    public void showRegister() {
-        registerPanel = new RegisterPanel(this, controller);
-        showPanel(registerPanel);
-    }
-
     public void accountCreated() {
         showLogin();
-        ViewUtils.showMessage(this, "Cuenta creada. Ya puedes ingresar.");
+        ViewUtils.showMessage(this, ErrorMessages.ACCOUNT_CREATED.getText());
     }
 }

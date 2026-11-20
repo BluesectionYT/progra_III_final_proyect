@@ -1,19 +1,17 @@
 package co.edu.uptc.view.panels;
 
+import co.edu.uptc.enums.ErrorMessages;
+import co.edu.uptc.interfaces.IController;
+import co.edu.uptc.view.components.ViewUtils;
+
+import javax.swing.*;
+import javax.swing.table.DefaultTableModel;
 import java.awt.Color;
 import java.util.List;
 
-import javax.swing.JButton;
-import javax.swing.JComboBox;
-import javax.swing.JPanel;
-import javax.swing.JTextField;
-import javax.swing.table.DefaultTableModel;
-
-import co.edu.uptc.interfaces.IController;
-import co.edu.uptc.view.utills.ViewUtils;
-
 public class RequestsPanel extends JPanel {
     private IController controller;
+    private JPanel newRequestPanel;
     private JTextField conceptField;
     private JTextField amountField;
     private JComboBox<String> categoryCombo;
@@ -21,50 +19,65 @@ public class RequestsPanel extends JPanel {
     private DefaultTableModel requestsModel;
 
     public RequestsPanel(IController controller) {
-        setLayout(null);
         this.controller = controller;
-        setBackground(Color.WHITE);
+        this.setLayout(null);
+        this.setBackground(Color.WHITE);
         initComponents();
     }
 
     private void initComponents() {
-        add(createNewRequestPanel());
+        newRequestPanel();
+        requestsTable();
+    }
 
+    private void newRequestPanel() {
+        newRequestPanel = ViewUtils.createTitledPanel("Nueva solicitud", 15, 15, 815, 200);
+        conceptField();
+        amountField();
+        categoryCombo();
+        sendButton();
+        add(newRequestPanel);
+    }
+
+    private void conceptField() {
+        newRequestPanel.add(ViewUtils.createLabel("Concepto", 20, 30, 100));
+        conceptField = ViewUtils.createTextField(130, 30, 260);
+        newRequestPanel.add(conceptField);
+    }
+
+    private void amountField() {
+        newRequestPanel.add(ViewUtils.createLabel("Monto ($)", 20, 70, 100));
+        amountField = ViewUtils.createTextField(130, 70, 260);
+        newRequestPanel.add(amountField);
+    }
+
+    private void categoryCombo() {
+        newRequestPanel.add(ViewUtils.createLabel("Categoría", 20, 110, 100));
+        categoryCombo = ViewUtils.createComboBox(130, 110, 260);
+        newRequestPanel.add(categoryCombo);
+    }
+
+    private void sendButton() {
+        sendButton = ViewUtils.createPrimaryButton("Enviar solicitud", 665, 150, 130, 30);
+        sendButton.addActionListener(e -> sendRequest());
+        newRequestPanel.add(sendButton);
+    }
+
+    private void requestsTable() {
         requestsModel = ViewUtils.createTableModel("#", "Fecha", "Concepto", "Categoría", "Monto", "Estado", "Motivo");
         JPanel myRequestsPanel = ViewUtils.createTitledPanel("Mis solicitudes", 15, 230, 815, 480);
         myRequestsPanel.add(ViewUtils.createTableScroll(requestsModel, 10, 25, 795, 440));
         add(myRequestsPanel);
     }
 
-    private JPanel createNewRequestPanel() {
-        JPanel panel = ViewUtils.createTitledPanel("Nueva solicitud", 15, 15, 815, 200);
-
-        panel.add(ViewUtils.createLabel("Concepto", 20, 30, 100));
-        conceptField = ViewUtils.createTextField(130, 30, 260);
-        panel.add(conceptField);
-
-        panel.add(ViewUtils.createLabel("Monto ($)", 20, 70, 100));
-        amountField = ViewUtils.createTextField(130, 70, 260);
-        panel.add(amountField);
-
-        panel.add(ViewUtils.createLabel("Categoría", 20, 110, 100));
-        categoryCombo = ViewUtils.createComboBox(130, 110, 260);
-        panel.add(categoryCombo);
-
-        sendButton = ViewUtils.createPrimaryButton("Enviar solicitud", 665, 150, 130, 30);
-        sendButton.addActionListener(e -> sendRequest());
-        panel.add(sendButton);
-        return panel;
-    }
-
     private void sendRequest() {
         Double amount = ViewUtils.parseAmount(amountField.getText());
         if (conceptField.getText().isBlank()) {
-            ViewUtils.showMessage(this, "El concepto es obligatorio.");
+            ViewUtils.showMessage(this, ErrorMessages.CONCEPT_REQUIRED.getText());
         } else if (amount == null) {
-            ViewUtils.showMessage(this, "El monto debe ser un número mayor que cero.");
+            ViewUtils.showMessage(this, ErrorMessages.AMOUNT_INVALID.getText());
         } else if (categoryCombo.getSelectedItem() == null) {
-            ViewUtils.showMessage(this, "Selecciona una categoría.");
+            ViewUtils.showMessage(this, ErrorMessages.SELECT_CATEGORY.getText());
         } else {
             controller.createRequest(conceptField.getText().trim(), amount, (String) categoryCombo.getSelectedItem());
         }

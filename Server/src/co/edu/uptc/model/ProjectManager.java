@@ -1,16 +1,24 @@
 package co.edu.uptc.model;
 
+import co.edu.uptc.enums.ErrorMessages;
 import co.edu.uptc.interfaces.IProjectManager;
 
 import java.util.ArrayList;
 
 public class ProjectManager implements IProjectManager {
-    private ArrayList<User> users = new ArrayList<>();
-    private ArrayList<Project> projects = new ArrayList<>();
+    private ArrayList<User> users;
+    private ArrayList<Project> projects;
+
+    public ProjectManager() {
+        this.users = new ArrayList<>();
+        this.projects = new ArrayList<>();
+    }
 
     @Override
     public User registerUser(String username, String passwordHash) {
-        if (findUser(username) != null) throw new IllegalArgumentException("Usuario ya existe");
+        if (findUser(username) != null) {
+            throw new IllegalArgumentException(ErrorMessages.USER_ALREADY_REGISTERED.getText());
+        }
         User user = new User(username, passwordHash);
         users.add(user);
         return user;
@@ -24,7 +32,7 @@ public class ProjectManager implements IProjectManager {
     @Override
     public void addProject(Project projectToAdd) {
         if (projects.stream().anyMatch(p -> p.getName().equalsIgnoreCase(projectToAdd.getName()))) {
-            throw new IllegalArgumentException("Ya existe un proyecto con ese nombre");
+            throw new IllegalArgumentException(ErrorMessages.PROJECT_NAME_TAKEN.getText());
         }
         projects.add(projectToAdd);
     }
@@ -35,14 +43,14 @@ public class ProjectManager implements IProjectManager {
     }
 
     @Override
-    public void removeProject(Project projectToAdd) {
-        projects.remove(projectToAdd);
+    public void removeProject(Project projectToRemove) {
+        projects.remove(projectToRemove);
     }
 
     @Override
     public ArrayList<User> closeProject(Project project) {
         if (!project.isActive()) {
-            throw new IllegalStateException("El proyecto ya está cerrado");
+            throw new IllegalStateException(ErrorMessages.PROJECT_ALREADY_CLOSED.getText());
         }
         ArrayList<User> affected = new ArrayList<>(project.getMembers());
         affected.add(project.getAdmin());

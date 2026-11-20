@@ -1,5 +1,6 @@
 package co.edu.uptc.net;
 
+import co.edu.uptc.enums.ErrorMessages;
 import co.edu.uptc.interfaces.IPasswordHasher;
 
 import javax.crypto.SecretKeyFactory;
@@ -8,6 +9,7 @@ import java.security.GeneralSecurityException;
 import java.security.MessageDigest;
 import java.security.SecureRandom;
 import java.util.Base64;
+import java.util.regex.Pattern;
 
 public class PasswordHasher implements IPasswordHasher {
     private static final String ALGORITHM = "PBKDF2WithHmacSHA256";
@@ -18,13 +20,13 @@ public class PasswordHasher implements IPasswordHasher {
     private SecureRandom random;
 
     public PasswordHasher() {
-        random = new SecureRandom();
+        this.random = new SecureRandom();
     }
 
     @Override
     public String hash(String password) {
         if (password == null || password.isEmpty()) {
-            throw new IllegalArgumentException("La contraseña no puede estar vacía");
+            throw new IllegalArgumentException(ErrorMessages.PASSWORD_EMPTY.getText());
         }
         byte[] salt = new byte[SALT_BYTES];
         random.nextBytes(salt);
@@ -38,10 +40,11 @@ public class PasswordHasher implements IPasswordHasher {
         if (password == null || storedHash == null) {
             return false;
         }
-        String[] parts = storedHash.split("\\$");
-        if (parts.length != 3) {
-            return false;
-        }
+        String[] parts = storedHash.split(Pattern.quote(SEPARATOR));
+        return parts.length == 3 && matches(password, parts);
+    }
+
+    private boolean matches(String password, String[] parts) {
         try {
             int iterations = Integer.parseInt(parts[0]);
             byte[] salt = Base64.getDecoder().decode(parts[1]);
@@ -58,7 +61,7 @@ public class PasswordHasher implements IPasswordHasher {
         try {
             return SecretKeyFactory.getInstance(ALGORITHM).generateSecret(spec).getEncoded();
         } catch (GeneralSecurityException e) {
-            throw new IllegalStateException("No se pudo calcular el hash", e);
+            throw new IllegalStateException(ErrorMessages.HASH_FAILED.getText(), e);
         } finally {
             spec.clearPassword();
         }

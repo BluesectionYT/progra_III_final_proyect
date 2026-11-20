@@ -14,7 +14,7 @@ public class PersistenceJSON implements IPersistence {
     private Gson gsonInstance;
 
     public PersistenceJSON() {
-        gsonInstance = new GsonBuilder().setPrettyPrinting().create();
+        this.gsonInstance = new GsonBuilder().setPrettyPrinting().create();
     }
 
     @Override
