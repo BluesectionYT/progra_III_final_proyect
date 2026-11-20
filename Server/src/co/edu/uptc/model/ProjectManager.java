@@ -63,6 +63,17 @@ public class ProjectManager implements IProjectManager {
     }
 
     @Override
+    public ArrayList<User> findPendingInvitees(Project project) {
+        ArrayList<User> invitees = new ArrayList<>();
+        for (User user : users) {
+            if (user.getPendingInvitations().contains(project)) {
+                invitees.add(user);
+            }
+        }
+        return invitees;
+    }
+
+    @Override
     public ArrayList<Project> getProjects() {
         return projects;
     }

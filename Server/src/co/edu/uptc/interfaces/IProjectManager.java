@@ -18,6 +18,8 @@ public interface IProjectManager {
 
     ArrayList<User> closeProject(Project project);
 
+    ArrayList<User> findPendingInvitees(Project project);
+
     ArrayList<Project> getProjects();
 
     ArrayList<User> getUsers();

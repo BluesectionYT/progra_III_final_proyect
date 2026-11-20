@@ -30,6 +30,9 @@ public class Controller implements IController {
     private static final String HOST = "localhost";
     private static final String ALL_CATEGORIES = "Todas";
     private static final String ADMIN_ROLE = "ADMIN";
+    private static final String NOTIFY_REMOVED = "REMOVED_FROM_PROJECT";
+    private static final String NOTIFY_PROJECT_CLOSED = "PROJECT_CLOSED";
+    private static final String NOTIFY_INVITATION_CANCELLED = "INVITATION_CANCELLED";
     private Socket socket;
     private MainFrame frame;
     private ListenerThread listener;
@@ -116,7 +119,7 @@ public class Controller implements IController {
         requestsCommands(category, response);
         approveCommands(category, response);
         teamCommands(category, response);
-        remainingCommands(category);
+        remainingCommands(category, response);
     }
 
     private boolean isSessionCommand(MessageCategory category) {
@@ -226,16 +229,37 @@ public class Controller implements IController {
         }
     }
 
-    private void remainingCommands(MessageCategory category) {
+    private void remainingCommands(MessageCategory category, JsonObject response) {
         switch (category) {
             case LEAVE_PROJECT:
                 showProject();
                 break;
             case NOTIFY:
+                onNotify(response);
                 break;
             case EXIT:
                 break;
         }
+    }
+
+    private void showServerError(String message) {
+        SwingUtilities.invokeLater(() -> frame.showGeneralError(message));
+    }
+
+    private void onNotify(JsonObject response) {
+        JsonObject data = dataOf(response);
+        String type = data.get("type").getAsString();
+        String message = data.get("message").getAsString();
+        SwingUtilities.invokeLater(() -> applyNotification(type, message));
+    }
+
+    private void applyNotification(String type, String message) {
+        if (NOTIFY_REMOVED.equals(type) || NOTIFY_PROJECT_CLOSED.equals(type)) {
+            frame.showProject();
+        } else if (NOTIFY_INVITATION_CANCELLED.equals(type)) {
+            getInvitations();
+        }
+        frame.addNotification(message);
     }
 
     private JsonObject parseResponse(Message message) {

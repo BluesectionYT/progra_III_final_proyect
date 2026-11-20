@@ -16,6 +16,9 @@ import java.util.Map;
 import java.util.stream.Collectors;
 
 public final class ResponseBuilder {
+    public static final String NOTIFY_REMOVED = "REMOVED_FROM_PROJECT";
+    public static final String NOTIFY_PROJECT_CLOSED = "PROJECT_CLOSED";
+    public static final String NOTIFY_INVITATION_CANCELLED = "INVITATION_CANCELLED";
     private static final DateTimeFormatter DATE_TIME = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm");
     private static final Gson GSON = new Gson();
 
@@ -32,6 +35,13 @@ public final class ResponseBuilder {
             content.put("data", extraData);
         }
         return GSON.toJson(content);
+    }
+
+    public static Map<String, Object> notification(String type, String message) {
+        Map<String, Object> data = new LinkedHashMap<>();
+        data.put("type", type);
+        data.put("message", message);
+        return data;
     }
 
     public static List<String> circleNames(User user) {
