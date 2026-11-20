@@ -1,35 +1,31 @@
 package co.edu.uptc.view.panels;
 
+import co.edu.uptc.interfaces.IController;
+import co.edu.uptc.view.components.ViewUtils;
+import co.edu.uptc.view.frames.MainFrame;
+
+import javax.swing.*;
 import java.awt.Component;
 import java.util.ArrayList;
 import java.util.List;
-
-import javax.swing.JButton;
-import javax.swing.JComponent;
-import javax.swing.JLabel;
-import javax.swing.JPanel;
-import javax.swing.JTabbedPane;
-
-import co.edu.uptc.interfaces.IController;
-import co.edu.uptc.view.frames.MainFrame;
-import co.edu.uptc.view.utills.ViewUtils;
 
 public abstract class SessionPanel extends JPanel {
     public static final String TAB_NOTIFICATIONS = "Notificaciones";
     private static final int RIGHT_EDGE = 865;
 
     private JTabbedPane tabs;
-    private List<JButton> headerButtonList = new ArrayList<>();
+    private List<JButton> headerButtonList;
     private NotificationsPanel notificationsPanel;
 
     protected SessionPanel(MainFrame frame, IController controller, String headerText) {
-        setLayout(null);
-        setBackground(ViewUtils.BACKGROUND);
-        initHeader(frame, controller, headerText);
+        this.headerButtonList = new ArrayList<>();
+        this.setLayout(null);
+        this.setBackground(ViewUtils.BACKGROUND);
+        initHeader(controller, headerText);
         initTabs();
     }
 
-    private void initHeader(MainFrame frame, IController controller, String headerText) {
+    private void initHeader(IController controller, String headerText) {
         JLabel headerLabel = new JLabel(headerText);
         headerLabel.setBounds(20, 10, 520, 28);
         add(headerLabel);
@@ -44,13 +40,15 @@ public abstract class SessionPanel extends JPanel {
         tabs.setBounds(20, 50, 845, 780);
         notificationsPanel = new NotificationsPanel();
         tabs.addTab(TAB_NOTIFICATIONS, notificationsPanel);
-        tabs.addChangeListener(e -> {
-            int index = tabs.getSelectedIndex();
-            if (index >= 0) {
-                onTabSelected(tabs.getTitleAt(index));
-            }
-        });
+        tabs.addChangeListener(e -> notifyTabSelected());
         add(tabs);
+    }
+
+    private void notifyTabSelected() {
+        int index = tabs.getSelectedIndex();
+        if (index >= 0) {
+            onTabSelected(tabs.getTitleAt(index));
+        }
     }
 
     private void rebuildHeaderButtons() {
@@ -90,7 +88,6 @@ public abstract class SessionPanel extends JPanel {
     }
 
     protected void onTabSelected(String title) {
-
     }
 
     public <T> T findTab(Class<T> type) {

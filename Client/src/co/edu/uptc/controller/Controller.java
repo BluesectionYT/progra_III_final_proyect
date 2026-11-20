@@ -1,23 +1,26 @@
 package co.edu.uptc.controller;
 
+import co.edu.uptc.enums.ErrorMessages;
+import co.edu.uptc.enums.MessageCategory;
 import co.edu.uptc.interfaces.IController;
 import co.edu.uptc.net.JSONReader;
 import co.edu.uptc.net.Message;
-import co.edu.uptc.enums.MessageCategory;
 import co.edu.uptc.view.frames.MainFrame;
 import co.edu.uptc.view.utills.ViewUtils;
-import com.google.gson.JsonObject;
-import com.google.gson.JsonParser;
+import com.google.gson.Gson;
 import com.google.gson.JsonArray;
 import com.google.gson.JsonElement;
-import com.google.gson.Gson;
+import com.google.gson.JsonObject;
+import com.google.gson.JsonParser;
 
-import java.io.*;
+import java.io.DataOutputStream;
+import java.io.IOException;
+import java.lang.reflect.InvocationTargetException;
 import java.net.Socket;
 import java.util.ArrayList;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.LinkedHashMap;
 
 import javax.swing.JOptionPane;
 import javax.swing.SwingUtilities;
@@ -25,6 +28,8 @@ import javax.swing.SwingUtilities;
 public class Controller implements IController {
     private static final int PORT = 10087;
     private static final String HOST = "localhost";
+    private static final String ALL_CATEGORIES = "Todas";
+    private static final String ADMIN_ROLE = "ADMIN";
     private Socket socket;
     private MainFrame frame;
     private ListenerThread listener;
@@ -35,13 +40,17 @@ public class Controller implements IController {
     private final Gson gson = new Gson();
 
     public Controller() {
+        connect();
+    }
+
+    private void connect() {
         try {
             this.socket = new Socket(HOST, PORT);
             this.listener = new ListenerThread(this, socket);
             this.sender = new DataOutputStream(socket.getOutputStream());
             this.jsonReader = new JSONReader();
         } catch (IOException e) {
-            close("No se pudo conectar con el servidor (" + HOST + ":" + PORT + ").\nVerifica que esté en ejecución.");
+            close(ErrorMessages.CONNECTION_FAILED.format(HOST, PORT));
         }
     }
 
@@ -51,12 +60,14 @@ public class Controller implements IController {
     }
 
     public void close() {
-        close("Se perdió la conexión con el servidor");
+        close(ErrorMessages.CONNECTION_LOST.getText());
     }
 
     public void close(String message) {
         synchronized (this) {
-            if (closed) return;
+            if (closed) {
+                return;
+            }
             closed = true;
         }
         if (message != null) {
@@ -65,92 +76,196 @@ public class Controller implements IController {
         System.exit(0);
     }
 
+    // ------------------------------------------------------------------
+    // Mensajes en pantalla desde cualquier hilo
+    // ------------------------------------------------------------------
+
+    /**
+     * Muestra un error y ESPERA a que el usuario lo cierre antes de continuar.
+     * Se usa solo al cerrar la aplicación: close() llama a System.exit(0) justo después,
+     * y si el diálogo no fuera bloqueante el programa terminaría antes de que se vea.
+     * - isEventDispatchThread(): ¿ya estoy en el hilo de Swing? Entonces lo muestro directo.
+     * - invokeAndWait(): si estoy en otro hilo (p. ej. el ListenerThread), le pido al hilo de Swing
+     *   que lo muestre y me quedo esperando a que termine.
+     */
     private void showMessage(String message) {
-        Runnable show = () -> {
-            if (frame != null) {
-                frame.showGeneralError(message);
-            } else {
-                JOptionPane.showMessageDialog(null, message, "Error", JOptionPane.ERROR_MESSAGE);
-            }
-        };
         try {
             if (SwingUtilities.isEventDispatchThread()) {
-                show.run();
+                displayError(message);
             } else {
-                SwingUtilities.invokeAndWait(show);
+                SwingUtilities.invokeAndWait(() -> displayError(message));
             }
-        } catch (Exception e) {
-            
+        } catch (InterruptedException e) {
+            Thread.currentThread().interrupt();
+        } catch (InvocationTargetException e) {
+            e.printStackTrace();
         }
     }
+
+    private void displayError(String message) {
+        if (frame != null) {
+            frame.showGeneralError(message);
+        } else {
+            JOptionPane.showMessageDialog(null, message, "Error", JOptionPane.ERROR_MESSAGE);
+        }
+    }
+
+    /**
+     * Muestra un error del servidor SIN esperar: invokeLater() deja la tarea en la cola del hilo
+     * de Swing y el ListenerThread sigue leyendo mensajes sin quedarse bloqueado.
+     */
+    private void showServerError(String error) {
+        SwingUtilities.invokeLater(() -> frame.showGeneralError(error));
+    }
+
+    // ------------------------------------------------------------------
+    // Despacho de respuestas del servidor (cada grupo es un switch)
+    // ------------------------------------------------------------------
 
     public void processData(String data) {
         Message message = jsonReader.jsonToMessage(data);
-        sessionCommands(message);
-        workCircleCommands(message);
-        projectCommands(message);
-        historyCommands(message);
-        requestsCommands(message);
-        approveCommands(message);
-        teamCommands(message);
-        remainingCommands(message);
-    }
-
-    private void sessionCommands(Message message) {
         MessageCategory category = message.getCategory();
-        if (category == MessageCategory.REGISTER || category == MessageCategory.LOGIN || category == MessageCategory.LOGOUT) {
-            switch (category) {
-                case REGISTER:
-                    onRegister(message);
-                    break;
-                case LOGIN:
-                    onLogin(message);
-                    break;
-                case LOGOUT:
-                    onLogout();
-                    break;
-            }
-        }
-    }
-
-    private void onRegister(Message message) {
         JsonObject response = parseResponse(message);
-        if (isOk(response)) {
-            SwingUtilities.invokeLater(() -> ViewUtils.showMessage(frame, "Cuenta creada. Ya puedes ingresar."));
-        } else {
-            String error = getError(response);
-            SwingUtilities.invokeLater(() -> frame.showError(error));
-        }
-    }
-
-    private void onLogin(Message message) {
-        JsonObject response = parseResponse(message);
-        if (!isOk(response)) {
-            String error = getError(response);
-            SwingUtilities.invokeLater(() -> frame.showError(error));
+        if (isSessionCommand(category)) {
+            sessionCommands(category, response);
             return;
         }
-        JsonObject data = response.getAsJsonObject("data");
-        String username = data.get("username").getAsString();
-        this.currentUser = username;
-        SwingUtilities.invokeLater(() -> {
-            if (!data.has("projectName")) {
-                frame.showProject();
-            } else {
-                String projectName = data.get("projectName").getAsString();
-                if ("ADMIN".equals(data.get("role").getAsString())) {
-                    frame.showAdmin(username, projectName);
-                } else {
-                    frame.showMember(username, projectName);
-                }
-            }
-        });
+        if (!isOk(response)) {
+            showServerError(getError(response));
+            return;
+        }
+        workCircleCommands(category, response);
+        projectCommands(category, response);
+        historyCommands(category, response);
+        requestsCommands(category, response);
+        approveCommands(category, response);
+        teamCommands(category, response);
+        remainingCommands(category);
     }
 
-    private void onLogout() {
-        currentUser = null;
-        SwingUtilities.invokeLater(frame::showLogin);
+    /** Las respuestas de sesión se manejan aparte porque muestran el error en el login, no en un diálogo general. */
+    private boolean isSessionCommand(MessageCategory category) {
+        return category == MessageCategory.REGISTER
+                || category == MessageCategory.LOGIN
+                || category == MessageCategory.LOGOUT;
     }
+
+    private void sessionCommands(MessageCategory category, JsonObject response) {
+        switch (category) {
+            case REGISTER:
+                onRegister(response);
+                break;
+            case LOGIN:
+                onLogin(response);
+                break;
+            case LOGOUT:
+                onLogout();
+                break;
+        }
+    }
+
+    private void workCircleCommands(MessageCategory category, JsonObject response) {
+        switch (category) {
+            case GET_CIRCLE:
+                onCircle(response);
+                break;
+            case ADD_TO_CIRCLE:
+                onCircle(response);
+                break;
+            case GET_INVITATIONS:
+                onInvitations(response);
+                break;
+            case ACCEPT_INVITATION:
+                onJoinedProject(response);
+                break;
+            case REJECT_INVITATION:
+                onInvitations(response);
+                break;
+        }
+    }
+
+    private void projectCommands(MessageCategory category, JsonObject response) {
+        switch (category) {
+            case CREATE_PROJECT:
+                onCreateProject(response);
+                break;
+            case GET_PROJECT_INFO:
+                onProjectInfo(response);
+                break;
+        }
+    }
+
+    private void historyCommands(MessageCategory category, JsonObject response) {
+        switch (category) {
+            case GET_SUMMARY:
+                onSummary(response);
+                break;
+            case GET_HISTORY:
+                onHistory(response);
+                break;
+        }
+    }
+
+    private void requestsCommands(MessageCategory category, JsonObject response) {
+        switch (category) {
+            case CREATE_REQUEST:
+                onCreateRequest(response);
+                break;
+            case GET_MY_REQUESTS:
+                onMyRequests(response);
+                break;
+        }
+    }
+
+    private void approveCommands(MessageCategory category, JsonObject response) {
+        switch (category) {
+            case GET_PENDING:
+                onPending(response);
+                break;
+            case APPROVE_REQUEST:
+                onRequestResolved(response);
+                break;
+            case REJECT_REQUEST:
+                onRequestResolved(response);
+                break;
+        }
+    }
+
+    private void teamCommands(MessageCategory category, JsonObject response) {
+        switch (category) {
+            case GET_TEAM:
+                onTeam(response);
+                break;
+            case INVITE_MEMBER:
+                onTeam(response);
+                break;
+            case REMOVE_MEMBER:
+                onTeam(response);
+                break;
+            case TRANSFER_ADMIN:
+                onJoinedProject(response);
+                break;
+            case CLOSE_PROJECT:
+                showProject();
+                break;
+        }
+    }
+
+    private void remainingCommands(MessageCategory category) {
+        switch (category) {
+            case LEAVE_PROJECT:
+                showProject();
+                break;
+            case NOTIFY:
+                break;
+            case EXIT:
+                break;
+        }
+    }
+
+    // ------------------------------------------------------------------
+    // Lectura de la respuesta JSON
+    // ------------------------------------------------------------------
 
     private JsonObject parseResponse(Message message) {
         return JsonParser.parseString(message.getText()).getAsJsonObject();
@@ -161,61 +276,11 @@ public class Controller implements IController {
     }
 
     private String getError(JsonObject response) {
-        return response.has("error") ? response.get("error").getAsString() : "Error desconocido";
+        return response.has("error") ? response.get("error").getAsString() : ErrorMessages.UNKNOWN_ERROR.getText();
     }
 
-    private void workCircleCommands(Message message) {
-        switch (message.getCategory()) {
-            case GET_CIRCLE:
-                onCircle(message);
-                break;
-            case ADD_TO_CIRCLE:
-                onCircle(message);
-                break;
-            case GET_INVITATIONS:
-                onInvitations(message);
-                break;
-            case ACCEPT_INVITATION:
-                onAcceptInvitation(message);
-                break;
-            case REJECT_INVITATION:
-                onInvitations(message);
-                break;
-        }
-    }
-
-    private void onCircle(Message message) {
-        JsonObject response = parseResponse(message);
-        if (!isOk(response)) {
-            showServerError(getError(response));
-            return;
-        }
-        List<String> members = toStringList(response.getAsJsonArray("data"));
-        SwingUtilities.invokeLater(() -> frame.setCircle(members));
-    }
-
-    private void onInvitations(Message message) {
-        JsonObject response = parseResponse(message);
-        if (!isOk(response)) {
-            showServerError(getError(response));
-            return;
-        }
-        List<String> invitations = toStringList(response.getAsJsonArray("data"));
-        SwingUtilities.invokeLater(() -> frame.setInvitations(invitations));
-    }
-
-    private void onAcceptInvitation(Message message) {
-        JsonObject response = parseResponse(message);
-        if (!isOk(response)) {
-            showServerError(getError(response));
-            return;
-        }
-        String projectName = response.getAsJsonObject("data").get("projectName").getAsString();
-        SwingUtilities.invokeLater(() -> frame.showMember(currentUser, projectName));
-    }
-
-    private void showServerError(String error) {
-        SwingUtilities.invokeLater(() -> frame.showGeneralError(error));
+    private JsonObject dataOf(JsonObject response) {
+        return response.getAsJsonObject("data");
     }
 
     private List<String> toStringList(JsonArray array) {
@@ -226,149 +291,181 @@ public class Controller implements IController {
         return list;
     }
 
-    private void onProjectInfo(Message message) {
-        JsonObject response = parseResponse(message);
+    // ------------------------------------------------------------------
+    // Sesión (aquí SÍ se revisa ok, porque el error va al formulario de login)
+    // ------------------------------------------------------------------
+
+    private void onRegister(JsonObject response) {
+        if (isOk(response)) {
+            SwingUtilities.invokeLater(() -> ViewUtils.showMessage(frame, ErrorMessages.ACCOUNT_CREATED.getText()));
+        } else {
+            SwingUtilities.invokeLater(() -> frame.showError(getError(response)));
+        }
+    }
+
+    private void onLogin(JsonObject response) {
         if (!isOk(response)) {
-            showServerError(getError(response));
+            SwingUtilities.invokeLater(() -> frame.showError(getError(response)));
             return;
         }
-        JsonObject data = response.getAsJsonObject("data");
+        JsonObject data = dataOf(response);
+        this.currentUser = data.get("username").getAsString();
+        SwingUtilities.invokeLater(() -> showSession(currentUser, data));
+    }
+
+    private void showSession(String username, JsonObject data) {
+        if (!data.has("projectName")) {
+            frame.showProject();
+        } else if (ADMIN_ROLE.equals(data.get("role").getAsString())) {
+            frame.showAdmin(username, data.get("projectName").getAsString());
+        } else {
+            frame.showMember(username, data.get("projectName").getAsString());
+        }
+    }
+
+    private void onLogout() {
+        currentUser = null;
+        SwingUtilities.invokeLater(frame::showLogin);
+    }
+
+    private void showProject() {
+        SwingUtilities.invokeLater(frame::showProject);
+    }
+
+    // ------------------------------------------------------------------
+    // Círculo, invitaciones y proyecto
+    // ------------------------------------------------------------------
+
+    private void onCircle(JsonObject response) {
+        List<String> members = toStringList(response.getAsJsonArray("data"));
+        SwingUtilities.invokeLater(() -> frame.setCircle(members));
+    }
+
+    private void onInvitations(JsonObject response) {
+        List<String> invitations = toStringList(response.getAsJsonArray("data"));
+        SwingUtilities.invokeLater(() -> frame.setInvitations(invitations));
+    }
+
+    /** Sirve para aceptar una invitación y para recibir la administración: en ambos casos el usuario queda como integrante. */
+    private void onJoinedProject(JsonObject response) {
+        String projectName = dataOf(response).get("projectName").getAsString();
+        SwingUtilities.invokeLater(() -> frame.showMember(currentUser, projectName));
+    }
+
+    private void onCreateProject(JsonObject response) {
+        String projectName = dataOf(response).get("projectName").getAsString();
+        SwingUtilities.invokeLater(() -> frame.showAdmin(currentUser, projectName));
+    }
+
+    private void onProjectInfo(JsonObject response) {
+        JsonObject data = dataOf(response);
         List<String> categories = toStringList(data.getAsJsonArray("categories"));
         String balance = money(data.get("availableBalance").getAsDouble());
         SwingUtilities.invokeLater(() -> frame.setProjectInfo(categories, balance));
     }
 
-    private void onSummary(Message message) {
-        JsonObject response = parseResponse(message);
-        if (!isOk(response)) {
-            showServerError(getError(response));
-            return;
-        }
-        JsonObject data = response.getAsJsonObject("data");
-        String balance = money(data.get("availableBalance").getAsDouble());
-        String totalSpent = money(data.get("totalSpent").getAsDouble());
-        List<Object[]> categoryRows = new ArrayList<>();
-        for (JsonElement element : data.getAsJsonArray("categories")) {
-            JsonObject item = element.getAsJsonObject();
-            double budget = item.get("budget").getAsDouble();
-            double spent = item.get("spent").getAsDouble();
-            double usage = budget > 0 ? spent / budget * 100 : 0;
-            categoryRows.add(new Object[]{item.get("name").getAsString(), money(budget), money(spent),
-                    String.format("%.1f%%", usage)});
-        }
-        List<Object[]> memberRows = new ArrayList<>();
-        for (JsonElement element : data.getAsJsonArray("members")) {
-            JsonObject item = element.getAsJsonObject();
-            memberRows.add(new Object[]{item.get("name").getAsString(), money(item.get("spent").getAsDouble())});
-        }
-        SwingUtilities.invokeLater(() -> frame.setSummary(balance, totalSpent, categoryRows, memberRows));
-    }
-
-    private void onHistory(Message message) {
-        JsonObject response = parseResponse(message);
-        if (!isOk(response)) {
-            showServerError(getError(response));
-            return;
-        }
-        List<Object[]> rows = toRequestRows(response.getAsJsonArray("data"), true, true);
-        SwingUtilities.invokeLater(() -> frame.setHistory(rows));
-    }
-
-    private void onMyRequests(Message message) {
-        JsonObject response = parseResponse(message);
-        if (!isOk(response)) {
-            showServerError(getError(response));
-            return;
-        }
-        List<Object[]> rows = toRequestRows(response.getAsJsonArray("data"), false, true);
-        SwingUtilities.invokeLater(() -> frame.setMyRequests(rows));
-    }
-
-    private void onCreateRequest(Message message) {
-        JsonObject response = parseResponse(message);
-        if (!isOk(response)) {
-            showServerError(getError(response));
-            return;
-        }
-        List<Object[]> rows = toRequestRows(response.getAsJsonArray("data"), false, true);
-        SwingUtilities.invokeLater(() -> frame.requestCreated(rows));
-    }
-
-    private void onPending(Message message) {
-        JsonObject response = parseResponse(message);
-        if (!isOk(response)) {
-            showServerError(getError(response));
-            return;
-        }
-        JsonObject data = response.getAsJsonObject("data");
-        String balance = money(data.get("availableBalance").getAsDouble());
-        List<Object[]> rows = toRequestRows(data.getAsJsonArray("requests"), true, false);
-        SwingUtilities.invokeLater(() -> frame.setPending(balance, rows));
-    }
-
-    private void onRequestResolved(Message message) {
-        JsonObject response = parseResponse(message);
-        if (!isOk(response)) {
-            showServerError(getError(response));
-            return;
-        }
-        JsonObject data = response.getAsJsonObject("data");
-        String balance = money(data.get("availableBalance").getAsDouble());
-        List<Object[]> rows = toRequestRows(data.getAsJsonArray("requests"), true, false);
-        SwingUtilities.invokeLater(() -> frame.requestResolved(balance, rows));
-    }
-
-    private void onTeam(Message message) {
-        JsonObject response = parseResponse(message);
-        if (!isOk(response)) {
-            showServerError(getError(response));
-            return;
-        }
-        JsonObject data = response.getAsJsonObject("data");
+    private void onTeam(JsonObject response) {
+        JsonObject data = dataOf(response);
         List<String> members = toStringList(data.getAsJsonArray("members"));
         List<String> candidates = toStringList(data.getAsJsonArray("candidates"));
         SwingUtilities.invokeLater(() -> frame.setTeam(members, candidates));
     }
 
-    private void onTransferAdmin(Message message) {
-        JsonObject response = parseResponse(message);
-        if (!isOk(response)) {
-            showServerError(getError(response));
-            return;
-        }
-        String projectName = response.getAsJsonObject("data").get("projectName").getAsString();
-        SwingUtilities.invokeLater(() -> frame.showMember(currentUser, projectName));
+    // ------------------------------------------------------------------
+    // Resumen, historial y solicitudes
+    // ------------------------------------------------------------------
+
+    private void onSummary(JsonObject response) {
+        JsonObject data = dataOf(response);
+        String balance = money(data.get("availableBalance").getAsDouble());
+        String totalSpent = money(data.get("totalSpent").getAsDouble());
+        List<Object[]> categoryRows = toCategoryRows(data.getAsJsonArray("categories"));
+        List<Object[]> memberRows = toMemberRows(data.getAsJsonArray("members"));
+        SwingUtilities.invokeLater(() -> frame.setSummary(balance, totalSpent, categoryRows, memberRows));
     }
 
-    private void onCloseProject(Message message) {
-        JsonObject response = parseResponse(message);
-        if (!isOk(response)) {
-            showServerError(getError(response));
-            return;
+    private List<Object[]> toCategoryRows(JsonArray categories) {
+        List<Object[]> rows = new ArrayList<>();
+        for (JsonElement element : categories) {
+            JsonObject item = element.getAsJsonObject();
+            double budget = item.get("budget").getAsDouble();
+            double spent = item.get("spent").getAsDouble();
+            double usage = budget > 0 ? spent / budget * 100 : 0;
+            rows.add(new Object[]{item.get("name").getAsString(), money(budget), money(spent),
+                    String.format("%.1f%%", usage)});
         }
-        SwingUtilities.invokeLater(frame::showProject);
+        return rows;
+    }
+
+    private List<Object[]> toMemberRows(JsonArray members) {
+        List<Object[]> rows = new ArrayList<>();
+        for (JsonElement element : members) {
+            JsonObject item = element.getAsJsonObject();
+            rows.add(new Object[]{item.get("name").getAsString(), money(item.get("spent").getAsDouble())});
+        }
+        return rows;
+    }
+
+    private void onHistory(JsonObject response) {
+        List<Object[]> rows = toRequestRows(response.getAsJsonArray("data"), true, true);
+        SwingUtilities.invokeLater(() -> frame.setHistory(rows));
+    }
+
+    private void onMyRequests(JsonObject response) {
+        List<Object[]> rows = toRequestRows(response.getAsJsonArray("data"), false, true);
+        SwingUtilities.invokeLater(() -> frame.setMyRequests(rows));
+    }
+
+    private void onCreateRequest(JsonObject response) {
+        List<Object[]> rows = toRequestRows(response.getAsJsonArray("data"), false, true);
+        SwingUtilities.invokeLater(() -> frame.requestCreated(rows));
+    }
+
+    private void onPending(JsonObject response) {
+        JsonObject data = dataOf(response);
+        String balance = money(data.get("availableBalance").getAsDouble());
+        List<Object[]> rows = toRequestRows(data.getAsJsonArray("requests"), true, false);
+        SwingUtilities.invokeLater(() -> frame.setPending(balance, rows));
+    }
+
+    private void onRequestResolved(JsonObject response) {
+        JsonObject data = dataOf(response);
+        String balance = money(data.get("availableBalance").getAsDouble());
+        List<Object[]> rows = toRequestRows(data.getAsJsonArray("requests"), true, false);
+        SwingUtilities.invokeLater(() -> frame.requestResolved(balance, rows));
     }
 
     private List<Object[]> toRequestRows(JsonArray requests, boolean withRequester, boolean withResolution) {
         List<Object[]> rows = new ArrayList<>();
         for (JsonElement element : requests) {
-            JsonObject item = element.getAsJsonObject();
-            List<Object> row = new ArrayList<>();
-            row.add(item.get("id").getAsInt());
-            row.add(item.get("createdAt").getAsString());
-            if (withRequester) {
-                row.add(item.get("requester").getAsString());
-            }
-            row.add(item.get("concept").getAsString());
-            row.add(item.get("category").getAsString());
-            row.add(money(item.get("amount").getAsDouble()));
-            if (withResolution) {
-                row.add(statusLabel(item.get("status").getAsString()));
-                row.add(item.has("reason") ? item.get("reason").getAsString() : "");
-            }
-            rows.add(row.toArray());
+            rows.add(toRequestRow(element.getAsJsonObject(), withRequester, withResolution));
         }
         return rows;
+    }
+
+    private Object[] toRequestRow(JsonObject item, boolean withRequester, boolean withResolution) {
+        List<Object> row = new ArrayList<>();
+        row.add(item.get("id").getAsInt());
+        row.add(item.get("createdAt").getAsString());
+        if (withRequester) {
+            row.add(item.get("requester").getAsString());
+        }
+        addDetails(row, item);
+        if (withResolution) {
+            addResolution(row, item);
+        }
+        return row.toArray();
+    }
+
+    private void addDetails(List<Object> row, JsonObject item) {
+        row.add(item.get("concept").getAsString());
+        row.add(item.get("category").getAsString());
+        row.add(money(item.get("amount").getAsDouble()));
+    }
+
+    private void addResolution(List<Object> row, JsonObject item) {
+        row.add(statusLabel(item.get("status").getAsString()));
+        row.add(item.has("reason") ? item.get("reason").getAsString() : "");
     }
 
     private String money(double amount) {
@@ -386,107 +483,14 @@ public class Controller implements IController {
         }
     }
 
-    private void projectCommands(Message message) {
-        switch (message.getCategory()) {
-            case CREATE_PROJECT:
-                onCreateProject(message);
-                break;
-            case GET_PROJECT_INFO:
-                onProjectInfo(message);
-                break;
-        }
-    }
-
-    private void onCreateProject(Message message) {
-        JsonObject response = parseResponse(message);
-        if (!isOk(response)) {
-            showServerError(getError(response));
-            return;
-        }
-        String projectName = response.getAsJsonObject("data").get("projectName").getAsString();
-        SwingUtilities.invokeLater(() -> frame.showAdmin(currentUser, projectName));
-    }
-
-    private void historyCommands(Message message) {
-        switch (message.getCategory()) {
-            case GET_SUMMARY:
-                onSummary(message);
-                break;
-            case GET_HISTORY:
-                onHistory(message);
-                break;
-        }
-    }
-
-    private void requestsCommands(Message message) {
-        switch (message.getCategory()) {
-            case CREATE_REQUEST:
-                onCreateRequest(message);
-                break;
-            case GET_MY_REQUESTS:
-                onMyRequests(message);
-                break;
-        }
-    }
-
-    private void approveCommands(Message message) {
-        switch (message.getCategory()) {
-            case GET_PENDING:
-                onPending(message);
-                break;
-            case APPROVE_REQUEST:
-                onRequestResolved(message);
-                break;
-            case REJECT_REQUEST:
-                onRequestResolved(message);
-                break;
-        }
-    }
-
-    private void teamCommands(Message message) {
-        switch (message.getCategory()) {
-            case GET_TEAM:
-                onTeam(message);
-                break;
-            case INVITE_MEMBER:
-                onTeam(message);
-                break;
-            case REMOVE_MEMBER:
-                onTeam(message);
-                break;
-            case TRANSFER_ADMIN:
-                onTransferAdmin(message);
-                break;
-            case CLOSE_PROJECT:
-                onCloseProject(message);
-                break;
-        }
-    }
-
-    private void remainingCommands(Message message) {
-        switch (message.getCategory()) {
-            case LEAVE_PROJECT:
-                onLeaveProject(message);
-                break;
-            case NOTIFY:
-                break;
-            case EXIT:
-                break;
-        }
-    }
-
-    private void onLeaveProject(Message message) {
-        JsonObject response = parseResponse(message);
-        if (!isOk(response)) {
-            showServerError(getError(response));
-            return;
-        }
-        SwingUtilities.invokeLater(frame::showProject);
-    }
+    // ------------------------------------------------------------------
+    // Envío de peticiones al servidor
+    // ------------------------------------------------------------------
 
     public synchronized void sendData(Message message) {
-        if (sender == null || message == null) return;
-
+        if (sender == null || message == null) {
+            return;
+        }
         try {
             sender.writeUTF(jsonReader.messageToJson(message));
             sender.flush();
@@ -504,17 +508,29 @@ public class Controller implements IController {
     }
 
     private String statusCode(String label) {
-        if ("Pendiente".equals(label)) return "PENDING";
-        if ("Aprobada".equals(label)) return "APPROVED";
-        if ("Rechazada".equals(label)) return "REJECTED";
-        return null;
+        if ("Pendiente".equals(label)) {
+            return "PENDING";
+        }
+        if ("Aprobada".equals(label)) {
+            return "APPROVED";
+        }
+        return "Rechazada".equals(label) ? "REJECTED" : null;
     }
 
     private String orderCode(String label) {
-        if ("Monto (mayor a menor)".equals(label)) return "AMOUNT_DESCENDING";
-        if ("Fecha de aprobación".equals(label)) return "APPROVAL_DATE";
-        if ("Integrante solicitante".equals(label)) return "REQUESTER";
-        return "CREATED_DATE";
+        if ("Monto (mayor a menor)".equals(label)) {
+            return "AMOUNT_DESCENDING";
+        }
+        if ("Fecha de aprobación".equals(label)) {
+            return "APPROVAL_DATE";
+        }
+        return "Integrante solicitante".equals(label) ? "REQUESTER" : "CREATED_DATE";
+    }
+
+    private void putIfNotBlank(Map<String, Object> filters, String key, String value) {
+        if (value != null && !value.isBlank()) {
+            filters.put(key, value);
+        }
     }
 
     private void sendRequest(MessageCategory category, Map<String, Object> body) {
@@ -531,8 +547,7 @@ public class Controller implements IController {
 
     @Override
     public void register(String user, String password) {
-        sendRequest(MessageCategory.REGISTER,
-            body("username", user.trim(), "password", password));
+        sendRequest(MessageCategory.REGISTER, body("username", user.trim(), "password", password));
     }
 
     @Override
@@ -572,26 +587,18 @@ public class Controller implements IController {
 
     @Override
     public void createRequest(String concept, double amount, String category) {
-        sendRequest(MessageCategory.CREATE_REQUEST,
-            body("concept", concept, "amount", amount, "category", category));
+        sendRequest(MessageCategory.CREATE_REQUEST, body("concept", concept, "amount", amount, "category", category));
     }
 
     @Override
     public void getHistory(String category, String status, String from, String to, String order) {
         Map<String, Object> filters = new LinkedHashMap<>();
-        if (category != null && !"Todas".equals(category)) {
-            filters.put("category", category);
+        if (!ALL_CATEGORIES.equals(category)) {
+            putIfNotBlank(filters, "category", category);
         }
-        String statusCode = statusCode(status);
-        if (statusCode != null) {
-            filters.put("status", statusCode);
-        }
-        if (from != null && !from.isBlank()) {
-            filters.put("from", from);
-        }
-        if (to != null && !to.isBlank()) {
-            filters.put("to", to);
-        }
+        putIfNotBlank(filters, "status", statusCode(status));
+        putIfNotBlank(filters, "from", from);
+        putIfNotBlank(filters, "to", to);
         filters.put("order", orderCode(order));
         sendRequest(MessageCategory.GET_HISTORY, filters);
     }
@@ -635,6 +642,7 @@ public class Controller implements IController {
     public void getCircle() {
         sendRequest(MessageCategory.GET_CIRCLE);
     }
+
     @Override
     public void getInvitations() {
         sendRequest(MessageCategory.GET_INVITATIONS);

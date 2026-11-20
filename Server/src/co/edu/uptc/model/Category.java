@@ -1,5 +1,7 @@
 package co.edu.uptc.model;
 
+import co.edu.uptc.enums.ErrorMessages;
+
 public class Category {
     private String name;
     private double budget;
@@ -23,16 +25,16 @@ public class Category {
         return spent;
     }
 
-    public boolean canAfford(double amount){
-        return amount <= (budget-spent);
+    public boolean canAfford(double amount) {
+        return amount <= (budget - spent);
     }
 
     public void addSpent(double amount) {
         if (amount <= 0) {
-            throw new IllegalArgumentException("El monto debe ser mayor que cero");
+            throw new IllegalArgumentException(ErrorMessages.AMOUNT_GREATER_THAN_ZERO.getText());
         }
         if (!canAfford(amount)) {
-            throw new IllegalStateException("La categoría no tiene presupuesto suficiente");
+            throw new IllegalStateException(ErrorMessages.CATEGORY_WITHOUT_BUDGET.getText());
         }
         this.spent += amount;
     }

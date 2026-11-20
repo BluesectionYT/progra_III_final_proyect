@@ -1,5 +1,6 @@
 package co.edu.uptc.model;
 
+import co.edu.uptc.enums.ErrorMessages;
 import co.edu.uptc.enums.Role;
 
 import java.util.ArrayList;
@@ -12,12 +13,12 @@ public class User {
     private List<Project> pendingInvitations;
     private Project currentProject;
     private Role role;
-    
+
     public User(String username, String passwordHash) {
         this.username = username;
         this.passwordHash = passwordHash;
-        workCircle = new ArrayList<>();
-        pendingInvitations = new ArrayList<>();
+        this.workCircle = new ArrayList<>();
+        this.pendingInvitations = new ArrayList<>();
         this.currentProject = null;
         this.role = Role.MEMBER;
     }
@@ -54,29 +55,28 @@ public class User {
         this.role = role;
     }
 
-    public void addToWorkCircle(User user){
+    public void addToWorkCircle(User user) {
         if (user == null) {
-            throw new IllegalArgumentException("El usuario no puede ser nulo");
+            throw new IllegalArgumentException(ErrorMessages.USER_NULL.getText());
         }
-        if (user.equals(this)){
-            throw new IllegalArgumentException("No puedes agregarte a tu propio círculo");
+        if (user.equals(this)) {
+            throw new IllegalArgumentException(ErrorMessages.SELF_IN_CIRCLE.getText());
         }
         if (!isInWorkCircle(user)) {
             this.workCircle.add(user);
         }
     }
 
-    public boolean isInWorkCircle(User user){
-        if (user == null) return false;
-        return this.workCircle.contains(user);
+    public boolean isInWorkCircle(User user) {
+        return user != null && this.workCircle.contains(user);
     }
 
     public void receiveInvitation(Project project) {
         if (project == null) {
-            throw new IllegalArgumentException("El proyecto no puede ser nulo");
+            throw new IllegalArgumentException(ErrorMessages.PROJECT_NULL.getText());
         }
-        if (!project.isActive()){
-            throw new IllegalStateException("El proyecto está inactivo");
+        if (!project.isActive()) {
+            throw new IllegalStateException(ErrorMessages.PROJECT_IS_INACTIVE.getText());
         }
         if (!this.pendingInvitations.contains(project)) {
             this.pendingInvitations.add(project);
@@ -84,32 +84,31 @@ public class User {
     }
 
     public void acceptInvitation(Project project) {
-        if (project == null) {
-            throw new IllegalArgumentException("El proyecto no puede ser nulo");
-        }
-        if (!this.pendingInvitations.contains(project)) {
-            throw new IllegalStateException("No existe una invitación pendiente para este proyecto");
-        }
+        requirePendingInvitation(project);
         project.addMember(this);
         this.pendingInvitations.remove(project);
     }
 
     public void rejectInvitation(Project project) {
-        if (project == null) {
-            throw new IllegalArgumentException("El proyecto no puede ser nulo");
-        }
-        if (!this.pendingInvitations.contains(project)) {
-            throw new IllegalStateException("No existe una invitación pendiente para este proyecto");
-        }
+        requirePendingInvitation(project);
         this.pendingInvitations.remove(project);
     }
 
+    private void requirePendingInvitation(Project project) {
+        if (project == null) {
+            throw new IllegalArgumentException(ErrorMessages.PROJECT_NULL.getText());
+        }
+        if (!this.pendingInvitations.contains(project)) {
+            throw new IllegalStateException(ErrorMessages.NO_PENDING_INVITATION.getText());
+        }
+    }
+
     public void leaveProject() {
-        if (!hasProject()){
-            throw new IllegalStateException("El usuario no pertenece a ningún proyecto actualmente");
+        if (!hasProject()) {
+            throw new IllegalStateException(ErrorMessages.USER_WITHOUT_PROJECT.getText());
         }
         if (role == Role.ADMIN) {
-            throw new IllegalStateException("El administrador debe transferir el cargo o cerrar el proyecto");
+            throw new IllegalStateException(ErrorMessages.ADMIN_CANNOT_LEAVE.getText());
         }
         currentProject.removeMember(this);
     }
@@ -120,8 +119,12 @@ public class User {
 
     @Override
     public boolean equals(Object o) {
-        if (this == o) return true;
-        if (!(o instanceof User)) return false;
+        if (this == o) {
+            return true;
+        }
+        if (!(o instanceof User)) {
+            return false;
+        }
         return username.equals(((User) o).username);
     }
 

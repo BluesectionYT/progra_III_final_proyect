@@ -1,9 +1,10 @@
 package co.edu.uptc.controller;
 
+import co.edu.uptc.enums.ErrorMessages;
+import co.edu.uptc.interfaces.IController;
+
 import java.io.*;
 import java.net.Socket;
-
-import co.edu.uptc.interfaces.IController;
 
 public class ListenerThread extends Thread {
     private DataInputStream input;
@@ -23,7 +24,7 @@ public class ListenerThread extends Thread {
                 controller.processData(line);
             } catch (IOException e) {
                 connected = false;
-                controller.close("conexion perdida");
+                controller.close(ErrorMessages.CONNECTION_LOST_LISTENER.getText());
             }
         }
     }

@@ -1,5 +1,6 @@
 package co.edu.uptc.model;
 
+import co.edu.uptc.enums.ErrorMessages;
 import co.edu.uptc.enums.RequestStatus;
 
 import java.time.LocalDateTime;
@@ -62,31 +63,27 @@ public class ExpenseRequest {
         return resolvedAt;
     }
 
+    public void setId(int id) {
+        this.id = id;
+    }
+
     public void approve(String reason) {
-        if (reason == null || reason.isBlank()) {
-            throw new IllegalArgumentException("El motivo es obligatorio");
-        }
-        if (status != RequestStatus.PENDING) {
-            throw new IllegalStateException("solo se pueden aprobar solicitudes en estado PENDING. Estado actual: " + this.status);
-        }
-        this.status = RequestStatus.APPROVED;
-        this.reason = reason;
-        this.resolvedAt = LocalDateTime.now();
+        resolve(RequestStatus.APPROVED, reason, ErrorMessages.ONLY_APPROVE_PENDING);
     }
 
     public void reject(String reason) {
+        resolve(RequestStatus.REJECTED, reason, ErrorMessages.ONLY_REJECT_PENDING);
+    }
+
+    private void resolve(RequestStatus newStatus, String reason, ErrorMessages notPendingMessage) {
         if (reason == null || reason.isBlank()) {
-            throw new IllegalArgumentException("El motivo es obligatorio");
+            throw new IllegalArgumentException(ErrorMessages.REASON_REQUIRED.getText());
         }
         if (status != RequestStatus.PENDING) {
-            throw new IllegalStateException("solo se pueden rechazar solicitudes en estado PENDING. Estado actual: " + this.status);
+            throw new IllegalStateException(notPendingMessage.format(this.status));
         }
-        this.status = RequestStatus.REJECTED;
+        this.status = newStatus;
         this.reason = reason;
         this.resolvedAt = LocalDateTime.now();
-    }
-    
-    public void setId(int id) {
-        this.id = id;
     }
 }

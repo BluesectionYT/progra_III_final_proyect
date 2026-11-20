@@ -1,15 +1,18 @@
 package co.edu.uptc.model;
 
-import java.time.LocalDate;
-import java.util.ArrayList;
-import java.util.Comparator;
-import java.util.HashMap;
-
+import co.edu.uptc.enums.ErrorMessages;
 import co.edu.uptc.enums.RequestStatus;
 import co.edu.uptc.enums.Role;
 import co.edu.uptc.enums.SortCriteria;
 import co.edu.uptc.structures.BinaryTree;
 import co.edu.uptc.structures.Queue;
+
+import java.time.LocalDate;
+import java.util.ArrayList;
+import java.util.Comparator;
+import java.util.HashMap;
+import java.util.List;
+import java.util.function.Function;
 
 public class Project {
     private String name;
@@ -24,7 +27,7 @@ public class Project {
 
     public Project(String name, double totalBudget, ArrayList<Category> categories, User admin) {
         if (name == null || totalBudget <= 0 || categories == null || admin == null) {
-            throw new IllegalArgumentException("Project name and total budget and categories are required");
+            throw new IllegalArgumentException(ErrorMessages.PROJECT_DATA_REQUIRED.getText());
         }
         this.name = name;
         this.active = true;
@@ -35,10 +38,10 @@ public class Project {
         this.members = new ArrayList<>();
         this.requests = new ArrayList<>();
         this.pendingQueue = new Queue<>();
-        projectAssignation();
+        assignAdmin();
     }
 
-    private void projectAssignation() {
+    private void assignAdmin() {
         admin.setRole(Role.ADMIN);
         admin.setCurrentProject(this);
     }
@@ -79,34 +82,46 @@ public class Project {
         return pendingQueue;
     }
 
+    public double getTotalSpent() {
+        return totalBudget - availableBalance;
+    }
+
     public void addMember(User user) {
-        if (!active) throw new IllegalStateException("Proyecto inactivo");
-        if (user.equals(admin) || members.contains(user))
-            throw new IllegalArgumentException("Usuario ya existente en este proyecto");
-        if (user.hasProject())
-            throw new IllegalArgumentException("Usuario ya existente en otro proyecto");
-        if (!user.getPendingInvitations().contains(this))
-            throw new IllegalStateException("El usuario no tiene invitación pendiente");
+        validateNewMember(user);
         members.add(user);
         user.setRole(Role.MEMBER);
         user.setCurrentProject(this);
     }
 
+    private void validateNewMember(User user) {
+        if (!active) {
+            throw new IllegalStateException(ErrorMessages.PROJECT_INACTIVE.getText());
+        }
+        if (user.equals(admin) || members.contains(user)) {
+            throw new IllegalArgumentException(ErrorMessages.USER_ALREADY_IN_PROJECT.getText());
+        }
+        if (user.hasProject()) {
+            throw new IllegalArgumentException(ErrorMessages.USER_IN_OTHER_PROJECT.getText());
+        }
+        if (!user.getPendingInvitations().contains(this)) {
+            throw new IllegalStateException(ErrorMessages.NO_INVITATION_FOR_USER.getText());
+        }
+    }
+
     public void removeMember(User user) {
         if (!members.contains(user)) {
-            throw new IllegalArgumentException("El usuario no es miembro de este proyecto");
+            throw new IllegalArgumentException(ErrorMessages.USER_NOT_MEMBER.getText());
         }
         members.remove(user);
-        user.setRole(Role.MEMBER);
-        user.setCurrentProject(null);
+        releaseUser(user);
     }
 
     public void transferAdmin(User newAdmin) {
         if (!members.contains(newAdmin)) {
-            throw new IllegalArgumentException("Usuario no existente en este proyecto");
+            throw new IllegalArgumentException(ErrorMessages.USER_NOT_IN_PROJECT.getText());
         }
         if (!newAdmin.getRole().equals(Role.MEMBER)) {
-            throw new IllegalArgumentException("El nuevo administrador no puede ser ya administrador");
+            throw new IllegalArgumentException(ErrorMessages.ADMIN_ALREADY.getText());
         }
         members.add(admin);
         admin.setRole(Role.MEMBER);
@@ -116,83 +131,84 @@ public class Project {
     }
 
     public void inviteMember(User invitee) {
-        if (!active) {
-            throw new IllegalStateException("Proyecto inactivo");
-        }
-        if (invitee.hasProject()) {
-            throw new IllegalArgumentException("Usuario existente en otro proyecto");
-        }
-        if (members.contains(invitee)) {
-            throw new IllegalArgumentException("Usuario existente en este proyecto");
-        }
-        if (!admin.isInWorkCircle(invitee)) {
-            throw new IllegalArgumentException("Solo puede invitar a personas en su circulo de trabajo");
-        }
+        validateInvitee(invitee);
         invitee.receiveInvitation(this);
     }
 
+    private void validateInvitee(User invitee) {
+        if (!active) {
+            throw new IllegalStateException(ErrorMessages.PROJECT_INACTIVE.getText());
+        }
+        if (invitee.hasProject()) {
+            throw new IllegalArgumentException(ErrorMessages.INVITEE_IN_OTHER_PROJECT.getText());
+        }
+        if (members.contains(invitee)) {
+            throw new IllegalArgumentException(ErrorMessages.INVITEE_IN_THIS_PROJECT.getText());
+        }
+        if (!admin.isInWorkCircle(invitee)) {
+            throw new IllegalArgumentException(ErrorMessages.INVITEE_NOT_IN_CIRCLE.getText());
+        }
+    }
+
     public void close() {
-        if (this.isActive()) {
-            for (User user : members) {
-                user.setRole(Role.MEMBER);
-                user.setCurrentProject(null);
-            }
-            members.clear();
-            this.categories.clear();
-            this.requests.clear();
-            while (!pendingQueue.isEmpty()) {
-                pendingQueue.pull();
-            }
-            this.admin.setRole(Role.MEMBER);
-            this.admin.setCurrentProject(null);
-            this.admin = null;
-            this.active = false;
+        if (!active) {
+            return;
+        }
+        members.forEach(this::releaseUser);
+        members.clear();
+        categories.clear();
+        requests.clear();
+        clearPendingQueue();
+        releaseUser(admin);
+        this.admin = null;
+        this.active = false;
+    }
+
+    private void releaseUser(User user) {
+        user.setRole(Role.MEMBER);
+        user.setCurrentProject(null);
+    }
+
+    private void clearPendingQueue() {
+        while (!pendingQueue.isEmpty()) {
+            pendingQueue.pull();
         }
     }
 
     public void submitRequest(ExpenseRequest request) {
-        if (request == null) {
-            throw new IllegalArgumentException("La solicitud no puede ser nula");
-        }
-        if (!active) {
-            throw new IllegalStateException("Proyecto inactivo");
-        }
-        if (!members.contains(request.getRequester())) {
-            throw new IllegalArgumentException("Solo los integrantes pueden enviar solicitudes");
-        }
-        if (!categories.contains(request.getCategory())) {
-            throw new IllegalArgumentException("La categoría no pertenece a este proyecto");
-        }
-        if (request.getStatus() != RequestStatus.PENDING || requests.contains(request)) {
-            throw new IllegalArgumentException("La solicitud no es válida para enviarse");
-        }
+        validateSubmission(request);
+        validateRequestData(request);
         request.setId(requests.size());
         pendingQueue.push(request);
         requests.add(request);
     }
 
-    public void approve(ExpenseRequest request, String reason) {
-        if (reason == null || reason.isBlank()) {
-            throw new IllegalArgumentException("La razon no puede ser nula");
-        }
+    private void validateSubmission(ExpenseRequest request) {
         if (request == null) {
-            throw new IllegalArgumentException("La solicitud no puede ser nula");
-        }
-        if (request.getStatus() != RequestStatus.PENDING) {
-            throw new IllegalStateException("La solicitud ya fue resuelta: " + request.getStatus());
-        }
-        if (pendingQueue.peek() != request) {
-            throw new IllegalStateException("Debe resolver primero la solicitud más antigua");
+            throw new IllegalArgumentException(ErrorMessages.REQUEST_NULL.getText());
         }
         if (!active) {
-            throw new IllegalStateException("Proyecto inactivo");
+            throw new IllegalStateException(ErrorMessages.PROJECT_INACTIVE.getText());
         }
-        if (request.getAmount() > availableBalance) {
-            throw new IllegalStateException("Saldo disponible insuficiente");
+    }
+
+    private void validateRequestData(ExpenseRequest request) {
+        if (!members.contains(request.getRequester())) {
+            throw new IllegalArgumentException(ErrorMessages.REQUESTER_NOT_MEMBER.getText());
         }
-        if (!request.getCategory().canAfford(request.getAmount())) {
-            throw new IllegalStateException("La categoría no tiene presupuesto suficiente");
+        if (!categories.contains(request.getCategory())) {
+            throw new IllegalArgumentException(ErrorMessages.CATEGORY_NOT_IN_THIS_PROJECT.getText());
         }
+        if (request.getStatus() != RequestStatus.PENDING || requests.contains(request)) {
+            throw new IllegalArgumentException(ErrorMessages.REQUEST_NOT_SUBMITTABLE.getText());
+        }
+    }
+
+    public void approve(ExpenseRequest request, String reason) {
+        validateReason(reason);
+        requireRequest(request);
+        validatePending(request);
+        validateFunds(request);
         request.approve(reason);
         availableBalance -= request.getAmount();
         request.getCategory().addSpent(request.getAmount());
@@ -200,49 +216,60 @@ public class Project {
     }
 
     public void reject(ExpenseRequest request, String reason) {
-        if (request == null) {
-            throw new IllegalArgumentException("La solicitud no puede ser nula");
-        }
-        if (reason == null || reason.isBlank()) {
-            throw new IllegalArgumentException("La razon no puede ser nula");
-        }
-        if (request.getStatus() != RequestStatus.PENDING) {
-            throw new IllegalStateException("La solicitud ya fue resuelta: " + request.getStatus());
-        }
-        if (pendingQueue.peek() != request) {
-            throw new IllegalStateException("Debe resolver primero la solicitud más antigua");
-        }
+        requireRequest(request);
+        validateReason(reason);
+        validatePending(request);
         request.reject(reason);
         pendingQueue.pull();
     }
 
-    public double getTotalSpent() {
-        return totalBudget - availableBalance;
+    private void validateReason(String reason) {
+        if (reason == null || reason.isBlank()) {
+            throw new IllegalArgumentException(ErrorMessages.REASON_NULL.getText());
+        }
+    }
+
+    private void requireRequest(ExpenseRequest request) {
+        if (request == null) {
+            throw new IllegalArgumentException(ErrorMessages.REQUEST_NULL.getText());
+        }
+    }
+
+    private void validatePending(ExpenseRequest request) {
+        if (request.getStatus() != RequestStatus.PENDING) {
+            throw new IllegalStateException(ErrorMessages.REQUEST_ALREADY_RESOLVED.format(request.getStatus()));
+        }
+        if (pendingQueue.peek() != request) {
+            throw new IllegalStateException(ErrorMessages.OLDEST_REQUEST_FIRST.getText());
+        }
+    }
+
+    private void validateFunds(ExpenseRequest request) {
+        if (!active) {
+            throw new IllegalStateException(ErrorMessages.PROJECT_INACTIVE.getText());
+        }
+        if (request.getAmount() > availableBalance) {
+            throw new IllegalStateException(ErrorMessages.INSUFFICIENT_BALANCE.getText());
+        }
+        if (!request.getCategory().canAfford(request.getAmount())) {
+            throw new IllegalStateException(ErrorMessages.CATEGORY_WITHOUT_BUDGET.getText());
+        }
     }
 
     public HashMap<Category, Double> getSpentByCategory() {
-        HashMap<Category, Double> result = new HashMap<>();
-        for (Category category : categories) {
-            result.put(category, 0.0);
-        }
-        for (ExpenseRequest request : requests) {
-            if (request.getStatus().equals(RequestStatus.APPROVED)) {
-                Category category = request.getCategory();
-                result.put(category, result.getOrDefault(category, 0.0) + request.getAmount());
-            }
-        }
-        return result;
+        return sumApprovedBy(categories, ExpenseRequest::getCategory);
     }
 
     public HashMap<User, Double> getSpentByMember() {
-        HashMap<User, Double> result = new HashMap<>();
-        for (User member : members) {
-            result.put(member, 0.0);
-        }
+        return sumApprovedBy(members, ExpenseRequest::getRequester);
+    }
+
+    private <K> HashMap<K, Double> sumApprovedBy(List<K> keys, Function<ExpenseRequest, K> keyOf) {
+        HashMap<K, Double> result = new HashMap<>();
+        keys.forEach(key -> result.put(key, 0.0));
         for (ExpenseRequest request : requests) {
             if (request.getStatus().equals(RequestStatus.APPROVED)) {
-                User requester = request.getRequester();
-                result.put(requester, result.getOrDefault(requester, 0.0) + request.getAmount());
+                result.merge(keyOf.apply(request), request.getAmount(), Double::sum);
             }
         }
         return result;
@@ -250,51 +277,49 @@ public class Project {
 
     public ArrayList<ExpenseRequest> filterHistory(Category category, RequestStatus status, LocalDate from, LocalDate to) {
         if (from != null && to != null && from.isAfter(to)) {
-            throw new IllegalArgumentException("La fecha inicial no puede ser posterior a la final");
+            throw new IllegalArgumentException(ErrorMessages.INVALID_DATE_RANGE.getText());
         }
         ArrayList<ExpenseRequest> result = new ArrayList<>();
         for (ExpenseRequest request : requests) {
-            LocalDate createdDate = request.getCreatedAt().toLocalDate();
-            boolean matches = true;
-            if (category != null && !category.equals(request.getCategory())) {
-                matches = false;
-            }
-            if (status != null && !status.equals(request.getStatus())) {
-                matches = false;
-            }
-            if (from != null && createdDate.isBefore(from)) {
-                matches = false;
-            }
-            if (to != null && createdDate.isAfter(to)) {
-                matches = false;
-            }
-            if (matches) {
+            if (matchesAttributes(request, category, status) && matchesDates(request, from, to)) {
                 result.add(request);
             }
         }
         return result;
     }
 
-    public ArrayList<ExpenseRequest> sortHistory(ArrayList<ExpenseRequest> requests, SortCriteria criteria) {
-        if (requests == null || criteria == null) {
-            throw new IllegalArgumentException("Las solicitudes y el criterio no pueden ser nulos");
+    private boolean matchesAttributes(ExpenseRequest request, Category category, RequestStatus status) {
+        return (category == null || category.equals(request.getCategory()))
+                && (status == null || status.equals(request.getStatus()));
+    }
+
+    private boolean matchesDates(ExpenseRequest request, LocalDate from, LocalDate to) {
+        LocalDate createdDate = request.getCreatedAt().toLocalDate();
+        return (from == null || !createdDate.isBefore(from)) && (to == null || !createdDate.isAfter(to));
+    }
+
+    public ArrayList<ExpenseRequest> sortHistory(ArrayList<ExpenseRequest> toSort, SortCriteria criteria) {
+        if (toSort == null || criteria == null) {
+            throw new IllegalArgumentException(ErrorMessages.SORT_ARGUMENTS_NULL.getText());
         }
-        Comparator<ExpenseRequest> comparator;
-        if (criteria.equals(SortCriteria.AMOUNT_DESCENDING)) {
-            comparator = Comparator.comparingDouble(ExpenseRequest::getAmount).reversed();
-        } else if (criteria.equals(SortCriteria.CREATED_DATE)) {
-            comparator = Comparator.comparing(ExpenseRequest::getCreatedAt);
-        } else if (criteria.equals(SortCriteria.APPROVAL_DATE)) {
-            comparator = Comparator.comparing(ExpenseRequest::getResolvedAt, Comparator.nullsLast(Comparator.naturalOrder()));
-        } else {
-            comparator = Comparator.comparing(request -> request.getRequester().getUsername());
-        }
-        comparator = comparator.thenComparingInt(ExpenseRequest::getId);
-        BinaryTree<ExpenseRequest> tree = new BinaryTree<>(comparator);
-        for (ExpenseRequest request : requests) {
+        BinaryTree<ExpenseRequest> tree = new BinaryTree<>(buildComparator(criteria).thenComparingInt(ExpenseRequest::getId));
+        for (ExpenseRequest request : toSort) {
             tree.add(request);
         }
         return tree.inOrderData();
+    }
+
+    private Comparator<ExpenseRequest> buildComparator(SortCriteria criteria) {
+        switch (criteria) {
+            case AMOUNT_DESCENDING:
+                return Comparator.comparingDouble(ExpenseRequest::getAmount).reversed();
+            case CREATED_DATE:
+                return Comparator.comparing(ExpenseRequest::getCreatedAt);
+            case APPROVAL_DATE:
+                return Comparator.comparing(ExpenseRequest::getResolvedAt, Comparator.nullsLast(Comparator.naturalOrder()));
+            default:
+                return Comparator.comparing(request -> request.getRequester().getUsername());
+        }
     }
 
     public ArrayList<ExpenseRequest> getRequestsOf(User user) {

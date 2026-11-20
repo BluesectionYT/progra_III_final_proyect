@@ -34,8 +34,7 @@ public class BinaryTree<E> {
         } else {
             nodeToCompare.setRight(add(object, nodeToCompare.getRight()));
         }
-        updateHeight(nodeToCompare);
-        return balance(nodeToCompare);
+        return rebalance(nodeToCompare);
     }
 
     private int getNodeHeight(BinaryTreeNode<E> node) {
@@ -56,23 +55,34 @@ public class BinaryTree<E> {
         return node == null ? 0 : getNodeHeight(node.getLeft()) - getNodeHeight(node.getRight());
     }
 
+    private BinaryTreeNode<E> rebalance(BinaryTreeNode<E> node) {
+        updateHeight(node);
+        return balance(node);
+    }
+
     private BinaryTreeNode<E> balance(BinaryTreeNode<E> node) {
         int factor = balanceFactor(node);
-        if (factor > 1 && balanceFactor(node.getLeft()) >= 0) {
-            return rotateRight(node);
+        if (factor > 1) {
+            return balanceLeftHeavy(node);
         }
-        if (factor > 1 && balanceFactor(node.getLeft()) < 0) {
-            node.setLeft(rotateLeft(node.getLeft()));
-            return rotateRight(node);
-        }
-        if (factor < -1 && balanceFactor(node.getRight()) <= 0) {
-            return rotateLeft(node);
-        }
-        if (factor < -1 && balanceFactor(node.getRight()) > 0) {
-            node.setRight(rotateRight(node.getRight()));
-            return rotateLeft(node);
+        if (factor < -1) {
+            return balanceRightHeavy(node);
         }
         return node;
+    }
+
+    private BinaryTreeNode<E> balanceLeftHeavy(BinaryTreeNode<E> node) {
+        if (balanceFactor(node.getLeft()) < 0) {
+            node.setLeft(rotateLeft(node.getLeft()));
+        }
+        return rotateRight(node);
+    }
+
+    private BinaryTreeNode<E> balanceRightHeavy(BinaryTreeNode<E> node) {
+        if (balanceFactor(node.getRight()) > 0) {
+            node.setRight(rotateRight(node.getRight()));
+        }
+        return rotateLeft(node);
     }
 
     private BinaryTreeNode<E> rotateRight(BinaryTreeNode<E> y) {
@@ -109,32 +119,36 @@ public class BinaryTree<E> {
             return null;
         }
         int comparatorValue = comparator.compare(value, actualNode.getValue());
+        if (comparatorValue == 0) {
+            return removeFound(actualNode);
+        }
         if (comparatorValue < 0) {
             actualNode.setLeft(remove(value, actualNode.getLeft()));
-        } else if (comparatorValue > 0) {
-            actualNode.setRight(remove(value, actualNode.getRight()));
         } else {
-            if (actualNode.getLeft() == null) {
-                return actualNode.getRight();
-            } else if (actualNode.getRight() == null) {
-                return actualNode.getLeft();
-            } else {
-                actualNode.setValue(getMax(actualNode));
-            }
+            actualNode.setRight(remove(value, actualNode.getRight()));
         }
-        updateHeight(actualNode);
-        return balance(actualNode);
+        return rebalance(actualNode);
+    }
+
+    private BinaryTreeNode<E> removeFound(BinaryTreeNode<E> node) {
+        if (node.getLeft() == null) {
+            return node.getRight();
+        }
+        if (node.getRight() == null) {
+            return node.getLeft();
+        }
+        node.setValue(getMax(node));
+        return rebalance(node);
     }
 
     private E getMax(BinaryTreeNode<E> node) {
         BinaryTreeNode<E> parent = node;
         BinaryTreeNode<E> current = node.getLeft();
-        E result;
         while (current.getRight() != null) {
             parent = current;
             current = current.getRight();
         }
-        result = current.getValue();
+        E result = current.getValue();
         if (parent == node) {
             parent.setLeft(current.getLeft());
         } else {

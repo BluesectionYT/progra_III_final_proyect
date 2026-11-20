@@ -4,11 +4,11 @@ public class Queue<E> {
     private Node<E> top;
 
     public Queue() {
-        top = null;
+        this.top = null;
     }
 
     public boolean push(E object) {
-        Node<E> newNode = new Node<E>(object);
+        Node<E> newNode = new Node<>(object);
         if (top == null) {
             top = newNode;
         } else {
@@ -24,11 +24,7 @@ public class Queue<E> {
     public E pull() {
         E result = peek();
         if (top != null) {
-            if (top.getNext() != null) {
-                top = top.getNext();
-            } else {
-                top = null;
-            }
+            top = top.getNext();
         }
         return result;
     }
